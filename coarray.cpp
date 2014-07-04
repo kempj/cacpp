@@ -35,8 +35,19 @@ class coarray {
         }
         T& operator[](int i){
             if(local_data)
+                //Also, need to check dimensions here to return the right type.
                 return local_data[i];
             else {
+                //need to get remote data
+                //Is it possible to detect if the object being returned is a 
+                // a coarray or type T?
+                // Maybe a new remote_reference type that acts as a proxy for base types?
+                // What about sub-arrays, will remote_references work consistently?
+                //
+                // I need a special class when I only have a 1D array left; 
+                // This class returns type T, while every other, higher dimension
+                // returns a coarray
+                
                 //gasnet_get();
             }
         }
