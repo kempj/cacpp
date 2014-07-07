@@ -21,40 +21,52 @@ using std::endl;
     }                                                               \
 } while(0)
 
-template<typename T, int NumDims>
+//Do I need a specialization for NumDims = 1, or any other dimensions?
+//What about a coarray of a scalar or single object?
+
+template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
-        //coarray(int dim, int *size);
+        coarray(int size[NumDims]);
         coarray(int size = 1);
         coarray(gasnet_seginfo_t s){
             node_info = s;
         }
-        //~coarray();//maybe object as other nodes see it to -1 
+        //~coarray();//maybe change object as other nodes see it to -1 
         coarray<T,NumDims>& operator()(int id){
             return *remote_coarrays[id];
         }
-        T& operator[](int i){
-            if(local_data)
-                //Also, need to check dimensions here to return the right type.
-                return local_data[i];
+        //What do I want here?
+        //  if the data is local, 
+        //      if the data is an int
+        //          return int
+        //      if the data is a subarray
+        //          return subarray
+        //  else data is remote
+        //      if data is an int, 
+        //          get data
+        //          return int
+        //      if data is subarray,
+        //          make remote_array
+        //          send off for reference
+        //          return remote_array
+
+        //If T is a complex object, do I want to return a copy of the object, or just a reference to it?
+
+        //How do I tell if type T or subarray?
+        T& operator[](int i){ 
+            // The remote dimensions should be the same as the local one.
+            // How strictly should this be tested/enforced?
+            if(data)
+                return data[i];
             else {
-                //need to get remote data
-                //Is it possible to detect if the object being returned is a 
-                // a coarray or type T?
-                // Maybe a new remote_reference type that acts as a proxy for base types?
-                // What about sub-arrays, will remote_references work consistently?
-                //
-                // I need a special class when I only have a 1D array left; 
-                // This class returns type T, while every other, higher dimension
-                // returns a coarray
-                
                 //gasnet_get();
             }
         }
     private:
-        T *local_data;
-        const static int dim = NumDims;
-        int *extents;
+        T *data;
+        //const static int dim = NumDims;
+        int extents[NumDims];
         coarray<T,NumDims> **remote_coarrays;
         gasnet_seginfo_t node_info;
 };
@@ -62,19 +74,20 @@ class coarray {
 template<typename T, int NumDims>
 coarray<T, NumDims>::coarray(int size) {
     remote_coarrays = new coarray<T,NumDims>*[gasnet_nodes()];
-    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];
+    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];//might want to change to smart pointer, and share with sub arrays
     GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
     for(int i = 0; i < gasnet_nodes(); i++) {
         if(gasnet_mynode() == i)
-            remote_coarrays[i] = this;
+            remote_coarrays[i] = this;//do I want to keep the global address of the local array stored?
         else
             remote_coarrays[i] = new coarray<T,NumDims>(s[i]);
     }
 
-    //dim = 1;
-    local_data = new T[size];
-    extents = new int[dim];
-    extents[0] = size;//TODO: make this general for any number of dimensions
+    data = new T[size];
+    //extents = new int[num_d];
+    for(int i = 0; i < NumDims; i++) {
+        extents[i] = size;
+    }
 };
 
 int this_image(){
