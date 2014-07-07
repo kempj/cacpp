@@ -21,7 +21,7 @@ using std::endl;
     }                                                               \
 } while(0)
 
-template<typename T>
+template<typename T, int NumDims>
 class coarray {
     public:
         //coarray(int dim, int *size);
@@ -30,7 +30,7 @@ class coarray {
             node_info = s;
         }
         //~coarray();//maybe object as other nodes see it to -1 
-        coarray<T>& operator()(int id){
+        coarray<T,NumDims>& operator()(int id){
             return *remote_coarrays[id];
         }
         T& operator[](int i){
@@ -53,28 +53,28 @@ class coarray {
         }
     private:
         T *local_data;
-        int dim;
+        const static int dim = NumDims;
         int *extents;
-        coarray<T> **remote_coarrays;
+        coarray<T,NumDims> **remote_coarrays;
         gasnet_seginfo_t node_info;
 };
 
-template<typename T>
-coarray<T>::coarray(int size) {
-    remote_coarrays = new coarray<T>*[gasnet_nodes()];
+template<typename T, int NumDims>
+coarray<T, NumDims>::coarray(int size) {
+    remote_coarrays = new coarray<T,NumDims>*[gasnet_nodes()];
     gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];
     GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
     for(int i = 0; i < gasnet_nodes(); i++) {
         if(gasnet_mynode() == i)
             remote_coarrays[i] = this;
         else
-            remote_coarrays[i] = new coarray<T>(s[i]);
+            remote_coarrays[i] = new coarray<T,NumDims>(s[i]);
     }
 
-    dim = 1;
+    //dim = 1;
     local_data = new T[size];
-    extents = new int[1];
-    extents[0] = size;
+    extents = new int[dim];
+    extents[0] = size;//TODO: make this general for any number of dimensions
 };
 
 int this_image(){
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 
     int id = this_image();
     int team_size = num_images();
-    coarray<int> test(team_size);
+    coarray<int,1> test(team_size);
 
     cout << "hello from node " << id << endl;
 
