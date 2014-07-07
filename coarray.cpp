@@ -32,47 +32,26 @@ class coarray {
         coarray(gasnet_seginfo_t s){
             node_info = s;
         }
-        //~coarray();//maybe change object as other nodes see it to -1 
         coarray<T,NumDims>& operator()(int id){
             return *remote_coarrays[id];
         }
-        //What do I want here?
-        //  if the data is local, 
-        //      if the data is an int
-        //          return int
-        //      if the data is a subarray
-        //          return subarray
-        //  else data is remote
-        //      if data is an int, 
-        //          get data
-        //          return int
-        //      if data is subarray,
-        //          make remote_array
-        //          send off for reference
-        //          return remote_array
-
-        //If T is a complex object, do I want to return a copy of the object, or just a reference to it?
-
-        //How do I tell if type T or subarray?
-        T& operator[](int i){ 
-            // The remote dimensions should be the same as the local one.
-            // How strictly should this be tested/enforced?
-            if(data)
+        coarray<T,NumDims-1>& operator[](int i){ 
+            if ( i < extents[0])
                 return data[i];
-            else {
-                //gasnet_get();
-            }
+            cout << "error, accessing data outside of bounds" << endl;
         }
+        //void remote_init(coarray<T, NumDims> **remote);
     private:
-        T *data;
+        coarray<T, NumDims-1> *data;
         //const static int dim = NumDims;
         int extents[NumDims];
         coarray<T,NumDims> **remote_coarrays;
         gasnet_seginfo_t node_info;
 };
-
+/*
 template<typename T, int NumDims>
-coarray<T, NumDims>::coarray(int size) {
+void 
+coarray<T, NumDims>::remote_init(coarray<T, NumDims> **remote_coarrays) {
     remote_coarrays = new coarray<T,NumDims>*[gasnet_nodes()];
     gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];//might want to change to smart pointer, and share with sub arrays
     GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
@@ -82,12 +61,36 @@ coarray<T, NumDims>::coarray(int size) {
         else
             remote_coarrays[i] = new coarray<T,NumDims>(s[i]);
     }
+    delete [] s;
+}
+*/
+template<typename T, int NumDims>
+coarray<T, NumDims>::coarray(int size) {
 
-    data = new T[size];
+    //remote_init(remote_coarrays);
+    data = new coarray<T,NumDims-1>[size];
     //extents = new int[num_d];
     for(int i = 0; i < NumDims; i++) {
         extents[i] = size;
     }
+};
+
+template<typename T>
+class coarray<T,1> {
+    public:
+        coarray(int size=1){
+            local_data = new T[size];
+        }
+        coarray<T,1>& operator()(int id){
+            return *remote_coarrays[id];
+        }
+        T& operator[](int i){
+            return local_data[i];
+        }
+    private:
+        T *local_data;
+        coarray<T,1> **remote_coarrays;
+        gasnet_seginfo_t node_info;
 };
 
 int this_image(){
