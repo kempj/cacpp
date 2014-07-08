@@ -21,18 +21,18 @@ using std::endl;
     }                                                               \
 } while(0)
 
-//Do I need a specialization for NumDims = 1, or any other dimensions?
-//What about a coarray of a scalar or single object?
-
-//This will need to be overloaded for NumDims=1
 
 template<typename T, int NumDims>
 class coref {
     public:
-        coref(int size = 1){
+        coref(int size = 1) {
             for(int i = 0; i < NumDims; i++)
                 extents[i] = size;
             data = new coref<T,NumDims-1>[size];
+        }
+        coref(void *address) {
+            //TODO: this is ugly. Double check for correctness
+            data = (coref<T,NumDims-1>*)address;
         }
         coref<T,NumDims-1>& operator[](int i){ 
             return data[i];
@@ -40,6 +40,8 @@ class coref {
     private:
         coref<T,NumDims-1> *data;
         int extents[NumDims];
+        //void *addr;
+        //bool is_local;
         //Might need to make extents a pointer for both templates, 
         // so the all the objects will be the same size on disk.
 };
@@ -61,23 +63,6 @@ class coref<T,0> {
     private:
         T data;
 };
-/*
-template<typename T>
-class coref<T, 1> {
-    public:
-        coref(int size = 1){
-            extents = size;
-            data = new T[size];
-        }
-        T& operator[](int i){
-            return data[i];
-        }
-        //void *address;
-    private:
-        T* data;
-        int extents;
-};
-*/
 
 template<typename T, int NumDims>//int NumCoDims>
 class coarray {
@@ -85,24 +70,24 @@ class coarray {
         coarray(int size):data(size){
             remote_init();
         }
-        coarray(int size[NumDims]): data(size){
-            remote_init();
-        }
-        coarray(gasnet_seginfo_t s){
+        //coarray(int size[NumDims]): data(size){remote_init();}
+        coarray(gasnet_seginfo_t s, int id):data(s.addr){
             address = s.addr;
+            node_id = id;
         }
         coarray<T,NumDims>& operator()(int id){
             return *remote_coarrays[id];
         }
         coref<T,NumDims-1>& operator[](int i){ 
-            return data[i];
+            if(gasnet_mynode() == node_id )
+                return data[i];
         }
-        int node_id;
     private:
         void remote_init();
         coref<T, NumDims> data;
         coarray<T,NumDims> **remote_coarrays;
         void* address;
+        int node_id;
 };
 
 template<typename T, int NumDims>
@@ -115,58 +100,11 @@ coarray<T, NumDims>::remote_init() {
         if(gasnet_mynode() == i) {
             remote_coarrays[i] = this;
         } else {
-            remote_coarrays[i] = new coarray<T,NumDims>(s[i]);
+            remote_coarrays[i] = new coarray<T,NumDims>(s[i], i);
         }
-        remote_coarrays[i]->node_id = i;
     }
     delete [] s;
 }
-/*
-template<typename T>
-class coarray<T,1> {
-    public:
-        coarray(int size): data(size){
-            remote_init();
-        }
-        coarray(gasnet_seginfo_t s){
-            address = s.addr;
-        }
-        coarray<T,1>& operator()(int id){
-            return *remote_coarrays[id];
-        }
-        T& operator[](int i){ 
-        //    if(gasnet_mynode() == node_id){
-                return data[i];
-        //    } else {
-                //data.address = address;
-        //    }
-        }
-        int node_id;
-    private:
-        void remote_init();
-        coref<T,1> data;
-        coarray<T,1> **remote_coarrays;
-        //gasnet_seginfo_t node_info;
-        void* address;
-};
-
-template<typename T>
-void 
-coarray<T, 1>::remote_init() {
-    remote_coarrays = new coarray<T,1>*[gasnet_nodes()];
-    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];
-    GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
-    for(int i = 0; i < gasnet_nodes(); i++) {
-        if(gasnet_mynode() == i) {
-            remote_coarrays[i] = this;
-        } else {
-            remote_coarrays[i] = new coarray<T,1>(s[i]);
-        }
-        remote_coarrays[i]->node_id = i;
-    }
-    delete [] s;
-}
-*/
 
 int this_image(){
     return gasnet_mynode();;
