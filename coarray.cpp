@@ -39,6 +39,8 @@ class coref {
     private:
         coref<T,NumDims-1> data;
         int extents[NumDims];
+        //Might need to make extents a pointer for both templates, 
+        // so the all the objects will be the same size on disk.
 };
 
 template<typename T>
@@ -51,6 +53,7 @@ class coref<T, 1> {
         T& operator[](int i){
             return data[i];
         }
+        //void *address;
     private:
         T* data;
         int extents;
@@ -63,7 +66,7 @@ class coarray {
             remote_init();
         }
         coarray(gasnet_seginfo_t s){
-            node_info = s;
+            address = s.addr;
         }
         coarray<T,NumDims>& operator()(int id){
             return *remote_coarrays[id];
@@ -71,24 +74,27 @@ class coarray {
         coref<T,NumDims>& operator[](int i){ 
             return data[i];
         }
+        int node_id;
     private:
         void remote_init();
         coref<T, NumDims> data;
         coarray<T,NumDims> **remote_coarrays;
-        gasnet_seginfo_t node_info;
+        void* address;
 };
 
 template<typename T, int NumDims>
 void 
 coarray<T, NumDims>::remote_init() {
     remote_coarrays = new coarray<T,NumDims>*[gasnet_nodes()];
-    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];//might want to change to smart pointer, and share with sub arrays
+    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];
     GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
     for(int i = 0; i < gasnet_nodes(); i++) {
-        if(gasnet_mynode() == i)
-            remote_coarrays[i] = this;//do I want to keep the global address of the local array stored?
-        else
+        if(gasnet_mynode() == i) {
+            remote_coarrays[i] = this;
+        } else {
             remote_coarrays[i] = new coarray<T,NumDims>(s[i]);
+        }
+        remote_coarrays[i]->node_id = i;
     }
     delete [] s;
 }
@@ -100,32 +106,40 @@ class coarray<T,1> {
             remote_init();
         }
         coarray(gasnet_seginfo_t s){
-            node_info = s;
+            address = s.addr;
         }
         coarray<T,1>& operator()(int id){
             return *remote_coarrays[id];
         }
         T& operator[](int i){ 
-            return data[i];
+        //    if(gasnet_mynode() == node_id){
+                return data[i];
+        //    } else {
+                //data.address = address;
+        //    }
         }
+        int node_id;
     private:
         void remote_init();
         coref<T,1> data;
         coarray<T,1> **remote_coarrays;
-        gasnet_seginfo_t node_info;
+        //gasnet_seginfo_t node_info;
+        void* address;
 };
 
 template<typename T>
 void 
 coarray<T, 1>::remote_init() {
     remote_coarrays = new coarray<T,1>*[gasnet_nodes()];
-    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];//might want to change to smart pointer, and share with sub arrays
+    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];
     GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
     for(int i = 0; i < gasnet_nodes(); i++) {
-        if(gasnet_mynode() == i)
-            remote_coarrays[i] = this;//do I want to keep the global address of the local array stored?
-        else
+        if(gasnet_mynode() == i) {
+            remote_coarrays[i] = this;
+        } else {
             remote_coarrays[i] = new coarray<T,1>(s[i]);
+        }
+        remote_coarrays[i]->node_id = i;
     }
     delete [] s;
 }
@@ -159,8 +173,6 @@ int main(int argc, char **argv)
     if(0 == id) {
         std::cout << test[0] << std::endl;
     }
-    //gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    //gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
 
     gasnet_exit(0);
 
