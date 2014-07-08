@@ -55,12 +55,25 @@ class coref<T,0> {
             return data;
         }
         coref<T,0>& operator=(coref<T,0> const& other){
-            //Thisis where I need to send the data
-            if(this != &other)
-                data = other.data;
+            int tmp = 0;
+            cout << "getting data" << endl;
+            if(other.node_id != gasnet_mynode()){
+                gasnet_get(&tmp, other.node_id, other.data, sizeof(T));
+            } else {
+                tmp = other.data;
+            }
+            if(node_id == gasnet_mynode()){
+                    cout << "Same Node" << endl;
+                if(this != &other){
+                    data = tmp;
+                }
+            } else {
+                gasnet_put(data, node_id, &tmp, sizeof(T));
+            }
             return *this;
         }
         coref<T,0>& operator=(T const& other){
+            cout << "other assignment" << endl;
             data = other;
             return *this;
         }
@@ -76,23 +89,19 @@ class coarray {
             remote_init();
         }
         //coarray(int size[NumDims]): data(size){remote_init();}
-        /*coarray(gasnet_seginfo_t s, int id):data(s.addr){
-            address = s.addr;
-            node_id = id;
-        }*/
         coref<T,NumDims>& operator()(int id){
             return *remote_data[id];
         }
         coref<T,NumDims-1>& operator[](int i){ 
-            if(gasnet_mynode() == node_id )
-                return (*data)[i];
+            //if(gasnet_mynode() == node_id )
+            return (*data)[i];
         }
     private:
         void remote_init();
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
-        void* address;
-        int node_id;
+        //void* address;
+        //int node_id;
 };
 
 template<typename T, int NumDims>
