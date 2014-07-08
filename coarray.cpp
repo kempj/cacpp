@@ -25,34 +25,41 @@ using std::endl;
 //What about a coarray of a scalar or single object?
 
 //This will need to be overloaded for NumDims=1
-template<typename T, int NumDims = 1>
+
+template<typename T, int NumDims>
 class coref {
     public:
         coref(int size = 1){
             extents[0] = size;
             data = new T[size];
         }
-        //coref<T,NumDims-1>& operator[](int i){ 
-        T& operator[](int i){ 
+        coref<T,NumDims-1>& operator[](int i){ 
+            return data[i];
+        }
+    private:
+        coref<T,NumDims-1> data;
+        int extents[NumDims];
+};
+
+template<typename T>
+class coref<T, 1> {
+    public:
+        coref(int size = 1){
+            extents = size;
+            data = new T[size];
+        }
+        T& operator[](int i){
             return data[i];
         }
     private:
         T* data;
-        int extents[NumDims];
+        int extents;
 };
-/*
-template<typename T>
-T&
-coref<T,1>::operator[](int id) {
-    return data[i];
-}*/
 
 template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
-        //coarray(int size[NumDims]): data(size){
-        //    remote_init();
-        coarray(int size): data(size){
+        coarray(int size[NumDims]): data(size){
             remote_init();
         }
         coarray(gasnet_seginfo_t s){
@@ -61,17 +68,15 @@ class coarray {
         coarray<T,NumDims>& operator()(int id){
             return *remote_coarrays[id];
         }
-        T& operator[](int i){ 
+        coref<T,NumDims>& operator[](int i){ 
             return data[i];
         }
     private:
         void remote_init();
         coref<T, NumDims> data;
-        //const static int dim = NumDims;
         coarray<T,NumDims> **remote_coarrays;
         gasnet_seginfo_t node_info;
 };
-
 
 template<typename T, int NumDims>
 void 
@@ -87,15 +92,43 @@ coarray<T, NumDims>::remote_init() {
     }
     delete [] s;
 }
-/*
-template<typename T, int NumDims>
-coarray<T, NumDims>::coarray(int size) {
-    remote_init();
-    //data = new coarray<T,NumDims-1>[size];
-    for(int i = 0; i < NumDims; i++) {
-        extents[i] = size;
+
+template<typename T>
+class coarray<T,1> {
+    public:
+        coarray(int size): data(size){
+            remote_init();
+        }
+        coarray(gasnet_seginfo_t s){
+            node_info = s;
+        }
+        coarray<T,1>& operator()(int id){
+            return *remote_coarrays[id];
+        }
+        T& operator[](int i){ 
+            return data[i];
+        }
+    private:
+        void remote_init();
+        coref<T,1> data;
+        coarray<T,1> **remote_coarrays;
+        gasnet_seginfo_t node_info;
+};
+
+template<typename T>
+void 
+coarray<T, 1>::remote_init() {
+    remote_coarrays = new coarray<T,1>*[gasnet_nodes()];
+    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];//might want to change to smart pointer, and share with sub arrays
+    GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
+    for(int i = 0; i < gasnet_nodes(); i++) {
+        if(gasnet_mynode() == i)
+            remote_coarrays[i] = this;//do I want to keep the global address of the local array stored?
+        else
+            remote_coarrays[i] = new coarray<T,1>(s[i]);
     }
-};*/
+    delete [] s;
+}
 
 
 int this_image(){
