@@ -35,6 +35,9 @@ template<typename T, int NumDims>
 class coref {
     public:
         coref(void *address, int id, int size) {
+            //will need to detect whether or not it is the top level coref,
+            // and allocate the whole array. 
+            // would this be better to do from coarray?
             node_id = id;
             extents = size;
             addr = address;
@@ -46,6 +49,10 @@ class coref {
             }
         }
         coref<T,NumDims-1>& operator[](int i){ 
+            //if I stored only one coref per dimension, I would need to 
+            // create new corefs here and return them with their address 
+            // and a reference to their data. This would require reference 
+            // counting or using smart pointers.
             if(this_image() != node_id) {
                 data[i].addr = (coref<T,NumDims-1> *)addr + i;
             }
@@ -58,42 +65,51 @@ class coref {
         coref();
         int extents;
         void *addr;
-        //Might need to make extents a pointer for both templates, 
-        // so the all the objects will be the same size on disk.
 };
 template<typename T>
 class coref<T,0> {
     public:
-        operator T(){
+        operator T() {
             if(node_id != this_image()){
                 gasnet_get(&data, node_id, &((coref<T,0> *) addr)->data, sizeof(T));
             }
             return data;
         }
+        //Not sure if this would be helpful to add. Without it, 
+        // the data is automaitically extracted using T() above, 
+        // and then passed to operator=(T) below.
+        // I would be duplicating the get and put logic.
+        // This would be helpful for higher dimension arrays in the future;
+        // being able to send an array from a remote machine to another remote machine
+        // without having to copy it locally.
         /*
-        coref<T,0>& operator=(coref<T,0> const& other){
-            int tmp = 0;
-            cout << "getting data" << endl;
-            if(other.node_id != gasnet_mynode()){
-                gasnet_get(&tmp, other.node_id, other.data, sizeof(T));
-            } else {
-                tmp = other.data;
-            }
-            if(node_id == gasnet_mynode()){
-                cout << "Same Node" << endl;
-                if(this != &other){
-                    data = tmp;
+        coref<T,0>& operator=(coref<T,0> & other){
+            if(this == & other)
+                return *this;
+            if(other.node_id == node_id) {
+                if(node_id == this_image()) {
+                    //local to local
+                    data = other.data;
+                } else {
+                    //remote to itself
+                    *this = T(other);//this can be optimized;
                 }
             } else {
-                gasnet_put(data, node_id, &tmp, sizeof(T));
+                if(node_id != this_image() && other.node_id != this_image()){
+                    //remote to another remote
+                    *this = T(other);//can be optimized
+                } else if(node_id == this_image()) {
+                    //local to remote
+                    *this = T(other);
+                } else {
+                    //remote to local
+                    other = T(*this);
+                }
             }
-            return *this;
+
         }*/
 
-        //Does the value retrieved match with lifetime/synchronization of remote data?
-        //Should I be making a new coref object and returning that?
-        //  It would have to be done without allocating it on the heap, so it destroys itself as
-        //  soon as it's not being used
+        //I need to make a new coref object and return it
         coref<T,0>& operator=(T const& other){
             data = other;
             if(this_image() != node_id) {
