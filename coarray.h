@@ -65,6 +65,9 @@ template<typename T>
 class coref<T,0> {
     public:
         operator T(){
+            if(node_id != this_image()){
+                gasnet_get(&data, node_id, &((coref<T,0> *) addr)->data, sizeof(T));
+            }
             return data;
         }
         /*
