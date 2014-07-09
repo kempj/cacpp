@@ -7,7 +7,9 @@ int main(int argc, char **argv)
 
     int id = this_image();
     int team_size = num_images();
-    coarray<int,1> test(team_size);
+    int extents[1];
+    extents[0] = team_size;
+    coarray<int,1> test(extents);
 
     for(int i = 0; i < team_size; i++) {
         test( (id+i) % team_size)[id] =  id ; 
