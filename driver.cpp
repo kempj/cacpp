@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     //    std::cout << "number of images: " <<  num_images() << std::endl;
     //}
 
-    test(0)[id] = id;
+    test(0)[id] = 42 + id;
     
     if(0 == id) {
         cout << "before barrier" << endl;

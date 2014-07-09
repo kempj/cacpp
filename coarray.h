@@ -47,7 +47,7 @@ class coref {
         }
         coref<T,NumDims-1>& operator[](int i){ 
             if(this_image() != node_id) {
-                data[i].addr = addr + i*sizeof(coref<T,NumDims-1>);//(&data[i] - &data[0]);
+                data[i].addr = (coref<T,NumDims-1> *)addr + i;
             }
             data[i].node_id = node_id;
             return data[i];
@@ -86,15 +86,15 @@ class coref<T,0> {
             }
             return *this;
         }*/
-        //coref<T,0>& operator=(T const& other){
-        coref<T,0>& operator=(T &other){
-            coref<T,0> *tmp = (coref<T,0> *) addr;
-            if(this_image() == node_id) {
-                data = other;
-            } else {
-                cout << "Node " << this_image() << " putting data ("<< other 
-                     <<") on node " << node_id  << " at " << &tmp->data << endl;
-                gasnet_put(node_id, &tmp->data, &other, sizeof(T));
+
+        //Does the value retrieved match with lifetime/synchronization of remote data?
+        //Should I be making a new coref object and returning that?
+        //  It would have to be done without allocating it on the heap, so it destroys itself as
+        //  soon as it's not being used
+        coref<T,0>& operator=(T const& other){
+            data = other;
+            if(this_image() != node_id) {
+                gasnet_put(node_id, &((coref<T,0> *) addr)->data, &data, sizeof(T));
             }
             return *this;
         }
