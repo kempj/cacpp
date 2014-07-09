@@ -21,82 +21,102 @@ using std::endl;
     }                                                               \
 } while(0)
 
-//Do I need a specialization for NumDims = 1, or any other dimensions?
-//What about a coarray of a scalar or single object?
 
-//This will need to be overloaded for NumDims=1
-template<typename T, int NumDims = 1>
+template<typename T, int NumDims>
 class coref {
     public:
-        coref(int size = 1){
-            extents[0] = size;
-            data = new T[size];
+        /*coref(int size = 1) {
+            for(int i = 0; i < NumDims; i++)
+                extents[i] = size;
+            //data = new coref<T,NumDims-1>[size];
+        }*/
+        coref(void *address, int id) {
+            //TODO: this is ugly. Double check for correctness
+            data = (coref<T,NumDims-1>*)address;
+            node_id = id;
         }
-        //coref<T,NumDims-1>& operator[](int i){ 
-        T& operator[](int i){ 
+        coref<T,NumDims-1>& operator[](int i){ 
+            data[i].node_id = node_id;
             return data[i];
         }
+        int node_id;
     private:
-        T* data;
+        coref<T,NumDims-1> *data;
         int extents[NumDims];
+        //void *addr;
+        //bool is_local;
+        //Might need to make extents a pointer for both templates, 
+        // so the all the objects will be the same size on disk.
 };
-/*
 template<typename T>
-T&
-coref<T,1>::operator[](int id) {
-    return data[i];
-}*/
+class coref<T,0> {
+    public:
+        operator T(){
+            return data;
+        }
+        coref<T,0>& operator=(coref<T,0> const& other){
+            int tmp = 0;
+            cout << "getting data" << endl;
+            if(other.node_id != gasnet_mynode()){
+                gasnet_get(&tmp, other.node_id, other.data, sizeof(T));
+            } else {
+                tmp = other.data;
+            }
+            if(node_id == gasnet_mynode()){
+                    cout << "Same Node" << endl;
+                if(this != &other){
+                    data = tmp;
+                }
+            } else {
+                gasnet_put(data, node_id, &tmp, sizeof(T));
+            }
+            return *this;
+        }
+        coref<T,0>& operator=(T const& other){
+            cout << "other assignment" << endl;
+            data = other;
+            return *this;
+        }
+        int node_id;
+    private:
+        T data;
+};
 
 template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
-        //coarray(int size[NumDims]): data(size){
-        //    remote_init();
-        coarray(int size): data(size){
+        coarray(int size){
             remote_init();
         }
-        coarray(gasnet_seginfo_t s){
-            node_info = s;
+        //coarray(int size[NumDims]): data(size){remote_init();}
+        coref<T,NumDims>& operator()(int id){
+            return *remote_data[id];
         }
-        coarray<T,NumDims>& operator()(int id){
-            return *remote_coarrays[id];
-        }
-        T& operator[](int i){ 
-            return data[i];
+        coref<T,NumDims-1>& operator[](int i){ 
+            //if(gasnet_mynode() == node_id )
+            return (*data)[i];
         }
     private:
         void remote_init();
-        coref<T, NumDims> data;
-        //const static int dim = NumDims;
-        coarray<T,NumDims> **remote_coarrays;
-        gasnet_seginfo_t node_info;
+        coref<T, NumDims> *data;
+        coref<T,NumDims> **remote_data;
+        //void* address;
+        //int node_id;
 };
-
 
 template<typename T, int NumDims>
 void 
 coarray<T, NumDims>::remote_init() {
-    remote_coarrays = new coarray<T,NumDims>*[gasnet_nodes()];
-    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];//might want to change to smart pointer, and share with sub arrays
+    remote_data = new coref<T,NumDims>*[gasnet_nodes()];
+    gasnet_seginfo_t *s =  new gasnet_seginfo_t[gasnet_nodes()];
     GASNET_SAFE(gasnet_getSegmentInfo(s, gasnet_nodes()));
     for(int i = 0; i < gasnet_nodes(); i++) {
-        if(gasnet_mynode() == i)
-            remote_coarrays[i] = this;//do I want to keep the global address of the local array stored?
-        else
-            remote_coarrays[i] = new coarray<T,NumDims>(s[i]);
+            remote_data[i] = new coref<T,NumDims>(s[i].addr, i);
+        if(gasnet_mynode() == i) 
+            data = remote_data[i] ;
     }
     delete [] s;
 }
-/*
-template<typename T, int NumDims>
-coarray<T, NumDims>::coarray(int size) {
-    remote_init();
-    //data = new coarray<T,NumDims-1>[size];
-    for(int i = 0; i < NumDims; i++) {
-        extents[i] = size;
-    }
-};*/
-
 
 int this_image(){
     return gasnet_mynode();;
