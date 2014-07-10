@@ -31,28 +31,63 @@ int num_images(){
 template<typename T, int NumDims>
 class coref {
     public:
-        coref(T *address, int id, int size[NumDims]) {
+        coref(T *address, int id, int sz) {
             node_id = id;
-            for(int i=0; i < NumDims; i++) {
-                extents[i] = size[i];
-            }
+            size = sz;
             data = address;
+            //sub_corefs = new coref<T,NumDims-1>*[size]();
+        }
+        //copy:
+        coref(const coref<T,NumDims>& other){
+            data = other.data;
+            node_id = other.node_id;
+            size = other.size;
+        }
+        //move:
+        coref(coref<T,NumDims>&& other) {
+            data = other.data;
+            size = other.size;
+            node_id = other.node_id;
+            //do I need to get rid of anything else?
+        }
+        //assignment:
+        coref<T,NumDims>& operator=(coref<T,NumDims> other){
+            data = other.data;
+            //size should already be the same
+            //if(other.node_id == this_image())
+            //if(node_id == other.node_id)
+            return *this;
         }
         coref<T,NumDims-1> operator[](int i){ 
-            return coref<T,NumDims-1>(data + i, node_id, 1);
+            //return coref<T,NumDims-1>(std::forward<int*>(data + i), std::forward<int>(node_id));
+            return coref<T,NumDims-1>(data + i, node_id);
         }
     private:
         T *data;
         int node_id;
         coref();
-        int extents[NumDims];
+        int size;
+        //coref<T,NumDims-1> **sub_corefs;
 };
 template<typename T>
 class coref<T,0> {
     public:
-        coref(T *address, int id, int size) {
+        coref(T *address, int id) {
             data = address;
             node_id = id;
+        }
+        coref(const coref<T,0>& other){
+            data = other.data;
+            node_id = other.node_id;
+        }
+        coref(coref<T,0>&& other) {
+            data = other.data;
+            node_id = other.node_id;
+        }
+        coref<T,0>& operator=(coref<T,0> other){
+            data = other.data;
+            node_id = other.node_id;
+            return *this;
         }
         operator T() {
             if(node_id != this_image()){
@@ -60,26 +95,6 @@ class coref<T,0> {
             }
             return *data;
         }
-        /*
-        coref<T,0>& operator=(coref<T,0> & other){
-            if(this == & other)
-                return *this;
-            if(other.node_id == node_id) {
-                if(node_id == this_image()) { //local to local
-                    data = other.data;
-                } else { //remote to itself
-                    *this = T(other);//this can be optimized;
-                }
-            } else {
-                if(node_id != this_image() && other.node_id != this_image()){ //remote to another remote
-                    *this = T(other);//can be optimized
-                } else if(node_id == this_image()) {  //local to remote
-                    *this = T(other);
-                } else { //remote to local
-                    other = T(*this);
-                }
-            }
-        }*/
         coref<T,0>& operator=(T const& other){
             T tmp = other;
             if(this_image() != node_id) {
@@ -93,7 +108,6 @@ class coref<T,0> {
         coref();
         int node_id;
         T *data;
-        int extents;
 };
 
 template<typename T, int NumDims>//int NumCoDims>
@@ -107,31 +121,37 @@ class coarray {
             }
             remote_init();
             T *local_data = new T[data_size];
-            data = new coref<T,NumDims>(local_data, this_image(), extents);
+            data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
+            remote_data[this_image()] = &(*data);
         }
         //coarray(int size[NumDims]): data(size){remote_init();}
         coref<T,NumDims>& operator()(int id){
             return *remote_data[id];
         }
-        coref<T,NumDims-1> operator[](int i){ 
+        coref<T,NumDims-1>& operator[](int i){ 
             return (*data)[i];
         }
+        //const coref<T,NumDims-1>& operator[](int i){ 
+        //    return (*data)[i];
+        //}
     private:
         int extents[NumDims];
         void remote_init();
         coref<T, NumDims> *data;
-        coref<T,NumDims> **remote_data;//I need a starting address and a node_id
+        coref<T,NumDims> **remote_data;
 };
 
 template<typename T, int NumDims>
 void 
 coarray<T, NumDims>::remote_init() {
+    //This will eventually need to be replaced with a global array of 
+    // pointers to the beginning of unallocated space
     remote_data = new coref<T,NumDims>*[num_images()];
     gasnet_seginfo_t *s =  new gasnet_seginfo_t[num_images()];
     GASNET_SAFE(gasnet_getSegmentInfo(s, num_images()));
     for(int i = 0; i < num_images(); i++) {
         if(this_image() != i) 
-        remote_data[i] = new coref<T,NumDims>((T*)s[i].addr, i, extents);
+            remote_data[i] = new coref<T,NumDims>((T*)s[i].addr, i, extents[0]);
     }
     delete [] s;
 }

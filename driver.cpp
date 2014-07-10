@@ -12,8 +12,11 @@ int main(int argc, char **argv)
     coarray<int,1> test(extents);
 
     for(int i = 0; i < team_size; i++) {
-        cout << "writing " << id << " to node " << id+i << endl ;
-        coref<int,0> tmp = test(0)[0];
+        //test[0] = 42;
+        //cout << "writing " << id << " to node " << id+i << endl ;
+        coref<int,1> tmp = test(0);
+        coref<int,0> tmp2 = tmp[0];
+        //cout << " done writing " << endl ;
 
         test( (id+i) % team_size)[id] =  id ; 
     }
