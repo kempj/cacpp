@@ -37,6 +37,7 @@ class coref {
             data = address;
             //sub_corefs = new coref<T,NumDims-1>*[size]();
         }
+        /*
         //copy:
         coref(const coref<T,NumDims>& other){
             data = other.data;
@@ -58,6 +59,7 @@ class coref {
             //if(node_id == other.node_id)
             return *this;
         }
+        */
         coref<T,NumDims-1> operator[](int i){ 
             //return coref<T,NumDims-1>(std::forward<int*>(data + i), std::forward<int>(node_id));
             return coref<T,NumDims-1>(data + i, node_id);
@@ -76,6 +78,7 @@ class coref<T,0> {
             data = address;
             node_id = id;
         }
+        /*
         coref(const coref<T,0>& other){
             data = other.data;
             node_id = other.node_id;
@@ -88,10 +91,12 @@ class coref<T,0> {
             data = other.data;
             node_id = other.node_id;
             return *this;
-        }
+        }*/
         operator T() {
+            T tmp;
             if(node_id != this_image()){
-                gasnet_get(data, node_id, data, sizeof(T));
+                gasnet_get(&tmp, node_id, data, sizeof(T));
+                return tmp;
             }
             return *data;
         }
@@ -102,7 +107,9 @@ class coref<T,0> {
             } else {
                 *data = other;
             }
-            return *this;  //I need to make and return a new coref object
+            return *this;   //I need to make and return a new coref object
+                            //Not so sure about that. I'll only ever be using it for it's address
+                            //and node_id, which haven't changed.
         }
     private:
         coref();
@@ -120,20 +127,22 @@ class coarray {
                 extents[i] = size[i];
             }
             remote_init();
-            T *local_data = new T[data_size];
-            data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
-            remote_data[this_image()] = &(*data);
+            data = remote_data[this_image()];
+            //T *local_data = new T[data_size];
+            //data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
+            //remote_data[this_image()] = &(*data);
         }
         //coarray(int size[NumDims]): data(size){remote_init();}
         coref<T,NumDims>& operator()(int id){
             return *remote_data[id];
         }
-        coref<T,NumDims-1>& operator[](int i){ 
+        //FIXME:if this isn't a reference, then I can't assign to it and have the results be persistend.
+        coref<T,NumDims-1> operator[](int i){ 
             return (*data)[i];
         }
-        //const coref<T,NumDims-1>& operator[](int i){ 
-        //    return (*data)[i];
-        //}
+        const coref<T,NumDims-1>& operator[](int i) const { 
+            return (*data)[i];
+        }
     private:
         int extents[NumDims];
         void remote_init();
@@ -150,8 +159,7 @@ coarray<T, NumDims>::remote_init() {
     gasnet_seginfo_t *s =  new gasnet_seginfo_t[num_images()];
     GASNET_SAFE(gasnet_getSegmentInfo(s, num_images()));
     for(int i = 0; i < num_images(); i++) {
-        if(this_image() != i) 
-            remote_data[i] = new coref<T,NumDims>((T*)s[i].addr, i, extents[0]);
+        remote_data[i] = new coref<T,NumDims>((T*)s[i].addr, i, extents[0]);
     }
     delete [] s;
 }

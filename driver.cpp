@@ -12,12 +12,6 @@ int main(int argc, char **argv)
     coarray<int,1> test(extents);
 
     for(int i = 0; i < team_size; i++) {
-        //test[0] = 42;
-        //cout << "writing " << id << " to node " << id+i << endl ;
-        coref<int,1> tmp = test(0);
-        coref<int,0> tmp2 = tmp[0];
-        //cout << " done writing " << endl ;
-
         test( (id+i) % team_size)[id] =  id ; 
     }
     
@@ -32,7 +26,7 @@ int main(int argc, char **argv)
             cout << endl;
         }
     }
-    /*
+    
     if(0 == id) {
         cout << endl << "Testing to see if the assignments to remote corefs work:" << endl;
         test(1)[0] = 42;
@@ -40,7 +34,7 @@ int main(int argc, char **argv)
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
     if(1 == id) {
-        cout << "\ttest[0] from image 1: " << test[0] 
+        cout << "\ttest[0]    from image 1: " << test[0] 
              << " (should be 42)" << endl;
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
@@ -49,18 +43,18 @@ int main(int argc, char **argv)
     if(0 == id) {
         cout << "Testing remote coref assignment to local coref (without parenthesis)" << endl;
         test[0] = test(1)[0];
-        cout << "\ttest[0] from image 0: " << test[0] 
+        cout << test(1)[0] << endl;
+        cout << "\ttest[0]    from image 0: " << test[0] 
              << " (should be 42)" << endl;
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
     if(1 == id) {
         cout << "\ttest(0)[0] from image 1: " << test(0)[0] 
-             << "(should be 42)" << endl;
+             << " (should be 42)" << endl;
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
-
 
     if(0 == id) { 
         cout << "Testing remote coref + int assignment to local coref" << endl;
@@ -112,7 +106,7 @@ int main(int argc, char **argv)
         int tmp = test(1)[0];
         cout << "tmp should = 42: " << tmp << endl;
     }
-    */
+    
     gasnet_exit(0);
 
     return 1;
