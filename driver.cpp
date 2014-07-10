@@ -12,6 +12,9 @@ int main(int argc, char **argv)
     coarray<int,1> test(extents);
 
     for(int i = 0; i < team_size; i++) {
+        cout << "writing " << id << " to node " << id+i << endl ;
+        coref<int,0> tmp = test(0)[0];
+
         test( (id+i) % team_size)[id] =  id ; 
     }
     
@@ -26,6 +29,7 @@ int main(int argc, char **argv)
             cout << endl;
         }
     }
+    /*
     if(0 == id) {
         cout << endl << "Testing to see if the assignments to remote corefs work:" << endl;
         test(1)[0] = 42;
@@ -105,6 +109,7 @@ int main(int argc, char **argv)
         int tmp = test(1)[0];
         cout << "tmp should = 42: " << tmp << endl;
     }
+    */
     gasnet_exit(0);
 
     return 1;
