@@ -35,33 +35,8 @@ class coref {
             node_id = id;
             size = sz;
             data = address;
-            //sub_corefs = new coref<T,NumDims-1>*[size]();
         }
-        /*
-        //copy:
-        coref(const coref<T,NumDims>& other){
-            data = other.data;
-            node_id = other.node_id;
-            size = other.size;
-        }
-        //move:
-        coref(coref<T,NumDims>&& other) {
-            data = other.data;
-            size = other.size;
-            node_id = other.node_id;
-            //do I need to get rid of anything else?
-        }
-        //assignment:
-        coref<T,NumDims>& operator=(coref<T,NumDims> other){
-            data = other.data;
-            //size should already be the same
-            //if(other.node_id == this_image())
-            //if(node_id == other.node_id)
-            return *this;
-        }
-        */
         coref<T,NumDims-1> operator[](int i){ 
-            //return coref<T,NumDims-1>(std::forward<int*>(data + i), std::forward<int>(node_id));
             return coref<T,NumDims-1>(data + i, node_id);
         }
     private:
@@ -69,7 +44,6 @@ class coref {
         int node_id;
         coref();
         int size;
-        //coref<T,NumDims-1> **sub_corefs;
 };
 template<typename T>
 class coref<T,0> {
@@ -78,20 +52,10 @@ class coref<T,0> {
             data = address;
             node_id = id;
         }
-        /*
-        coref(const coref<T,0>& other){
-            data = other.data;
-            node_id = other.node_id;
-        }
-        coref(coref<T,0>&& other) {
-            data = other.data;
-            node_id = other.node_id;
-        }
-        coref<T,0>& operator=(coref<T,0> other){
-            data = other.data;
-            node_id = other.node_id;
+        coref<T,0>& operator=(coref<T,0> & other){
+            *this = T(other.data);
             return *this;
-        }*/
+        }
         operator T() {
             T tmp;
             if(node_id != this_image()){

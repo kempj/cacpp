@@ -27,8 +27,33 @@ int main(int argc, char **argv)
         }
     }
     
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
     if(0 == id) {
-        cout << endl << "Testing to see if the assignments to remote corefs work:" << endl;
+        cout << endl << "\nTesting to see if the assignments to local corefs work:" << endl;
+        test(0)[0] = 20;
+    }
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
+    if(0 == id) {
+        cout << "\ttest(0)[0] from image 0: " << test(0)[0] 
+             << " (should be 20)" << endl;
+        cout << "\ttest[0]    from image 0: " << test[0] 
+             << " (should be 20)" << endl;
+    }
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    if(1 == id) {
+        cout << "\ttest(0)[0] from image 1: " << test(0)[0] 
+             << " (should be 20)" << endl;
+    }
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
+    if(0 == id) {
+        cout << endl << "\nTesting to see if the assignments to remote corefs work:" << endl;
         test(1)[0] = 42;
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
@@ -41,9 +66,8 @@ int main(int argc, char **argv)
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
 
     if(0 == id) {
-        cout << "Testing remote coref assignment to local coref (without parenthesis)" << endl;
+        cout << "\nTesting remote coref assignment to local coref (without parenthesis)" << endl;
         test[0] = test(1)[0];
-        cout << test(1)[0] << endl;
         cout << "\ttest[0]    from image 0: " << test[0] 
              << " (should be 42)" << endl;
     }
@@ -57,7 +81,7 @@ int main(int argc, char **argv)
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
 
     if(0 == id) { 
-        cout << "Testing remote coref + int assignment to local coref" << endl;
+        cout << "\nTesting remote coref + int assignment to local coref" << endl;
         test[1] = test(1)[0] + 1;
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
@@ -72,7 +96,7 @@ int main(int argc, char **argv)
     }
 
     if(0 == id) { 
-        cout << "Testing remote coref to another remote coref" << endl;
+        cout << "\nTesting remote coref to another remote coref" << endl;
         test(2)[0] = test(1)[0];
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
@@ -87,7 +111,7 @@ int main(int argc, char **argv)
     }
 
     if(0 == id) { 
-        cout << "Testing remote coref + int assignment to another remote coref" << endl;
+        cout << "\nTesting remote coref + int assignment to another remote coref" << endl;
         test(2)[1] = test(1)[0] + 1;
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
@@ -102,7 +126,7 @@ int main(int argc, char **argv)
     }
 
     if(0 == id) {
-        cout << "Testing remote coref assignment to local int" << endl;
+        cout << "\nTesting remote coref assignment to local int" << endl;
         int tmp = test(1)[0];
         cout << "tmp should = 42: " << tmp << endl;
     }
