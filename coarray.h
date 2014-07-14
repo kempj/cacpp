@@ -71,9 +71,7 @@ class coref<T,0> {
             } else {
                 *data = other;
             }
-            return *this;   //I need to make and return a new coref object
-                            //Not so sure about that. I'll only ever be using it for it's address
-                            //and node_id, which haven't changed.
+            return *this;
         }
     private:
         coref();
@@ -100,7 +98,7 @@ class coarray {
         coref<T,NumDims>& operator()(int id){
             return *remote_data[id];
         }
-        //FIXME:if this isn't a reference, then I can't assign to it and have the results be persistend.
+        //FIXME:if this isn't a reference, then I can't assign to it and have the results be persistent.
         coref<T,NumDims-1> operator[](int i){ 
             return (*data)[i];
         }

@@ -1,10 +1,6 @@
 #include "coarray.h"
 
-int main(int argc, char **argv) 
-{
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
-
+void test1() {
     int id = this_image();
     int team_size = num_images();
     int extents[1];
@@ -130,6 +126,20 @@ int main(int argc, char **argv)
         int tmp = test(1)[0];
         cout << "tmp should = 42: " << tmp << endl;
     }
+    
+}
+
+int main(int argc, char **argv) 
+{
+    GASNET_SAFE(gasnet_init(&argc, &argv));
+    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
+
+    int id = this_image();
+    int team_size = num_images();
+    int extents[1];
+    extents[0] = team_size;
+    coarray<int,1> test(extents);
+
     
     gasnet_exit(0);
 
