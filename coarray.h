@@ -62,6 +62,15 @@ class coref {
 template<typename T>
 class coref <T,1>{
     public:
+        void print(){
+            for(int i=0; i < size; i++){
+                cout << data[i];
+                if(i < size-1) {
+                    cout << ", ";
+                }
+            }
+            cout << endl;
+        }
         coref(T *address, int id, int sz[1]):node_id(id), data(address), size(sz[0]){}
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
@@ -80,6 +89,7 @@ class coref<T,0> {
             data = address;
             node_id = id;
         }
+        //TODO: define other operators, like +=
         coref<T,0>& operator=(coref<T,0> & other){
             *this = T(other.data);
             return *this;

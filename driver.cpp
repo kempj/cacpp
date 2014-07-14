@@ -129,11 +129,7 @@ void test1() {
     
 }
 
-int main(int argc, char **argv) 
-{
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
-
+void test2() {
     int id = this_image();
     int team_size = num_images();
     int extents[2] = {3, 5};
@@ -199,6 +195,60 @@ int main(int argc, char **argv)
         gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
         gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
     }
+}
+
+int main(int argc, char **argv) 
+{
+    GASNET_SAFE(gasnet_init(&argc, &argv));
+    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
+
+    int id = this_image();
+    int team_size = num_images();
+    int extents[2] = {5, 3};
+    coarray<int,2> A(extents);
+    int extent2[2] = {3, 5};
+    coarray<int,2> B(extent2);
+    int extent3[2] = {5, 5};
+    coarray<int,2> C(extent3);
+    int counter = 1;
+
+    for(int i = 0; i < extents[0]; i++) {
+        for(int j=0; j < extents[1]; j++) {
+            A[i][j] = i;
+            B[j][i] = j;//counter;
+            counter++;
+        }
+    }
+
+    for(int row = 0; row < 5; row++) {
+        for(int col = 0; col < 5; col++) {
+            for(int inner = 0; inner < 3; inner++) {
+                C[row][col] = C[row][col] + A[row][inner] * B[inner][col];
+            }
+        }
+    }
+
+    cout << "A: " << endl;
+    for(int i =0; i < 5; i++) {
+        A[i].print();
+    }
+    cout << "B: " << endl;
+    for(int i =0; i < 3; i++) {
+        B[i].print();
+    }
+    cout << "C: " << endl;
+    for(int i =0; i < 5; i++) {
+        C[i].print();
+    }
+    /*
+    if(this_image() == 0) {
+        for(int i = 0; i < 5; i++) {
+            for(int j = 0; j < 5; j++) {
+                cout << C[i][j] << ", ";
+            }
+            cout << endl;
+        }
+    } */
     gasnet_exit(0);
 
     return 1;
