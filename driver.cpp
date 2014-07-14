@@ -145,7 +145,6 @@ int main(int argc, char **argv)
             //test2D[i][j] = counter;
             //counter++;
             if(id < extents[0]){
-                cout << "writing to  node " << (id+i) % team_size << endl;
                 test2D( (id+i) % team_size)[id][j] = j + id;
             }
         }

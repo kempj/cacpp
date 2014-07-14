@@ -21,11 +21,22 @@ using std::endl;
     }                                                               \
 } while(0)
 
+
+static gasnet_seginfo_t *segment_info;
+
+
 int this_image(){
     return gasnet_mynode();;
 }
 int num_images(){
     return gasnet_nodes();
+}
+
+void remote_init(){
+    if(!segment_info) {
+        segment_info =  new gasnet_seginfo_t[num_images()];
+        GASNET_SAFE(gasnet_getSegmentInfo(segment_info, num_images()));
+    }
 }
 
 template<typename T, int NumDims>
@@ -104,16 +115,18 @@ class coarray {
                 extents[i] = size[i];
             }
             remote_init();
+            remote_data = new coref<T,NumDims>*[num_images()];
+            for(int i = 0; i < num_images(); i++) {
+                remote_data[i] = new coref<T,NumDims>((T*)segment_info[i].addr, i, extents);
+            }
             data = remote_data[this_image()];
             //T *local_data = new T[data_size];
             //data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
             //remote_data[this_image()] = &(*data);
         }
-        //coarray(int size[NumDims]): data(size){remote_init();}
         coref<T,NumDims>& operator()(int id){
             return *remote_data[id];
         }
-        //FIXME:if this isn't a reference, then I can't assign to it and have the results be persistent.
         coref<T,NumDims-1> operator[](int i){ 
             return (*data)[i];
         }
@@ -122,22 +135,23 @@ class coarray {
         }
     private:
         int extents[NumDims];
-        void remote_init();
+        //void remote_init();
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
+        int id;
 };
 
+
+/*
 template<typename T, int NumDims>
 void 
 coarray<T, NumDims>::remote_init() {
     //This will eventually need to be replaced with a global array of 
     // pointers to the beginning of unallocated space
-    remote_data = new coref<T,NumDims>*[num_images()];
-    gasnet_seginfo_t *s =  new gasnet_seginfo_t[num_images()];
-    GASNET_SAFE(gasnet_getSegmentInfo(s, num_images()));
+    segment_info =  new gasnet_seginfo_t[num_images()];
+    GASNET_SAFE(gasnet_getSegmentInfo(segment_info, num_images()));
     for(int i = 0; i < num_images(); i++) {
-        remote_data[i] = new coref<T,NumDims>((T*)s[i].addr, i, extents);
+        remote_data[i] = new coref<T,NumDims>((T*)segment_info[i].addr, i, extents);
     }
-    delete [] s;
 }
-
+*/
