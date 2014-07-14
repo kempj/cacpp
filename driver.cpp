@@ -164,6 +164,25 @@ int main(int argc, char **argv)
         cout << endl;
     }
     */
+    
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
+    int extent2[] = {2,4};
+    coarray<int,2> ca2(extent2);
+    ca2[0][0] = 1;
+    ca2[0][1] = 3;
+    ca2[1][0] = 5;
+    ca2[1][1] = 7;
+    
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
+    if(id == 0) {
+        cout << "ca2 = [[" << ca2[0][0] << ", " << ca2[0][1] << "], ["
+                           << ca2[1][0] << ", " << ca2[1][1] << "]]" << endl;
+    }
+
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
 
@@ -180,7 +199,6 @@ int main(int argc, char **argv)
         gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
         gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
     }
-    
     gasnet_exit(0);
 
     return 1;
