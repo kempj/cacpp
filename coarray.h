@@ -35,7 +35,9 @@ class coref {
             std::copy(sz, sz + NumDims, size);
         }
         coref<T,NumDims-1> operator[](int i){ 
-            return coref<T,NumDims-1>(data + i, node_id, size);
+            int newsize[NumDims-1];
+            std::copy(size+1, size + NumDims, newsize);
+            return coref<T,NumDims-1>(data + i*size[1], node_id, newsize);
         }
     private:
         T *data;

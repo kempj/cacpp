@@ -138,35 +138,51 @@ int main(int argc, char **argv)
     int team_size = num_images();
     int extents[2] = {3, 5};
     coarray<int,2> test2D(extents);
-
-    test2D[0][0] = 42;
-    cout << "test2D[0][0] = " << test2D[0][0] << endl;
-
-    test2D[0][1] = test2D[0][0];
-    cout << "test2D[0][1] = " << test2D[0][1] << endl;
-
-    test2D[0][2] = test2D[0][0];
-    cout << "test2D[0][2] = " << test2D[0][2] << endl;
-
-    test2D[1][2] = test2D[0][0];
-    cout << "test2D[1][2] = " << test2D[1][2] << endl;
-   /* 
-    for(int i = 0; i < team_size; i++) {
-        test( (id+i) % team_size)[id] =  id ; 
-    }
     
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    //int counter = 0;
+    for(int i = 0; i < extents[0]; i++) {
+        for(int j = 0; j < extents[1]; j++) {
+            //test2D[i][j] = counter;
+            //counter++;
+            if(id < extents[0]){
+                cout << "writing to  node " << (id+i) % team_size << endl;
+                test2D( (id+i) % team_size)[id][j] = j + id;
+            }
+        }
+    }
 
-    if(id == 0) {
-        for( int i = 0; i < team_size; i++) {
-            for( int j = 0; j < team_size; j++) {
-                cout << test(i)[j] << ", ";
+    /*
+     if(id == 0) {
+        for(int i = 0; i < extents[0]; i++) {
+            for(int j = 0; j < extents[1]; j++) {
+                cout << test2D[i][j] << ", ";
             }
             cout << endl;
         }
+        for(int i = 0; i < extents[1] * extents[0]; i++) {
+            cout << test2D[0][i] << ", ";
+        }
+        cout << endl;
     }
+    */
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
+    for( int i = 0; i < team_size; i++) {
+        if(i == id) {
+            for( int j = 0; j < extents[0]; j++) {
+                for( int k = 0; k < extents[1]; k++) {
+                    cout << test2D[j][k] << ", ";
+                }
+                cout << endl;
+            }
+            cout << endl;
+        }
+        gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+        gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    }
+    
     gasnet_exit(0);
-*/
+
     return 1;
 }
