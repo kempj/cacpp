@@ -136,12 +136,37 @@ int main(int argc, char **argv)
 
     int id = this_image();
     int team_size = num_images();
-    int extents[1];
-    extents[0] = team_size;
-    coarray<int,1> test(extents);
+    int extents[2] = {3, 5};
+    coarray<int,2> test2D(extents);
 
+    test2D[0][0] = 42;
+    cout << "test2D[0][0] = " << test2D[0][0] << endl;
+
+    test2D[0][1] = test2D[0][0];
+    cout << "test2D[0][1] = " << test2D[0][1] << endl;
+
+    test2D[0][2] = test2D[0][0];
+    cout << "test2D[0][2] = " << test2D[0][2] << endl;
+
+    test2D[1][2] = test2D[0][0];
+    cout << "test2D[1][2] = " << test2D[1][2] << endl;
+   /* 
+    for(int i = 0; i < team_size; i++) {
+        test( (id+i) % team_size)[id] =  id ; 
+    }
     
-    gasnet_exit(0);
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
 
+    if(id == 0) {
+        for( int i = 0; i < team_size; i++) {
+            for( int j = 0; j < team_size; j++) {
+                cout << test(i)[j] << ", ";
+            }
+            cout << endl;
+        }
+    }
+    gasnet_exit(0);
+*/
     return 1;
 }

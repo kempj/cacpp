@@ -31,13 +31,25 @@ int num_images(){
 template<typename T, int NumDims>
 class coref {
     public:
-        coref(T *address, int id, int sz) {
-            node_id = id;
-            size = sz;
-            data = address;
+        coref(T *address, int id, int sz[NumDims]):node_id(id), data(address) {
+            std::copy(sz, sz + NumDims, size);
         }
         coref<T,NumDims-1> operator[](int i){ 
-            return coref<T,NumDims-1>(data + i, node_id);
+            return coref<T,NumDims-1>(data + i, node_id, size);
+        }
+    private:
+        T *data;
+        int node_id;
+        coref();
+        int size[NumDims];
+};
+
+template<typename T>
+class coref <T,1>{
+    public:
+        coref(T *address, int id, int sz[1]):node_id(id), data(address), size(sz[0]){}
+        coref<T,0> operator[](int i){ 
+            return coref<T,0>(data + i, node_id);
         }
     private:
         T *data;
@@ -45,6 +57,7 @@ class coref {
         coref();
         int size;
 };
+
 template<typename T>
 class coref<T,0> {
     public:
@@ -121,7 +134,7 @@ coarray<T, NumDims>::remote_init() {
     gasnet_seginfo_t *s =  new gasnet_seginfo_t[num_images()];
     GASNET_SAFE(gasnet_getSegmentInfo(s, num_images()));
     for(int i = 0; i < num_images(); i++) {
-        remote_data[i] = new coref<T,NumDims>((T*)s[i].addr, i, extents[0]);
+        remote_data[i] = new coref<T,NumDims>((T*)s[i].addr, i, extents);
     }
     delete [] s;
 }
