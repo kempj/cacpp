@@ -23,7 +23,7 @@ using std::endl;
 
 
 gasnet_seginfo_t *segment_info;
-int num_coarrays=0;
+//int num_coarrays=0;
 int64_t data_size=0;
 
 
@@ -120,19 +120,11 @@ class coarray {
             remote_data = new coref<T,NumDims>*[num_images()];
             for(int i = 0; i < num_images(); i++) {
                 remote_data[i] = new coref<T,NumDims>((T*)(segment_info[i].addr + data_size), i, extents);
-                gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-                gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
-
-                if(i == this_image()) {
-                    cout << "Sizeof(T) = " << sizeof(T) << endl;
-                    cout << "segment_info[i].addr = " << segment_info[i].addr << ", data_size = " << data_size << endl;
-                    cout << "starting address for node " << this_image() << "= " << segment_info[i].addr + data_size << endl;
-                }
             }
             data = remote_data[this_image()];
-            id = num_coarrays;
-            num_coarrays++;
             data_size += (local_size * sizeof(T));
+            //id = num_coarrays;
+            //num_coarrays++;
             //T *local_data = new T[data_size];
             //data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
             //remote_data[this_image()] = &(*data);
@@ -150,5 +142,5 @@ class coarray {
         int extents[NumDims];
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
-        int id;
+        //int id;
 };
