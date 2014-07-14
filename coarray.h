@@ -34,6 +34,12 @@ int num_images(){
     return gasnet_nodes();
 }
 
+void sync_all() {
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+}
+
+
 void remote_init(){
     if(!segment_info) {
         segment_info =  new gasnet_seginfo_t[num_images()];
@@ -97,7 +103,9 @@ class coref<T,0> {
         operator T() {
             T tmp;
             if(node_id != this_image()){
+                //cout << "Getting from node " << node_id << ": ";
                 gasnet_get(&tmp, node_id, data, sizeof(T));
+                //cout << tmp << endl;
                 return tmp;
             }
             return *data;
@@ -105,6 +113,7 @@ class coref<T,0> {
         coref<T,0>& operator=(T const& other){
             T tmp = other;
             if(this_image() != node_id) {
+                //cout << "putting " << other << "on node " << node_id << endl;
                 gasnet_put(node_id, data, &tmp, sizeof(T));
             } else {
                 *data = other;
@@ -140,7 +149,7 @@ class coarray {
             //remote_data[this_image()] = &(*data);
         }
         coref<T,NumDims>& operator()(int id){
-            return *remote_data[id];
+            return *(remote_data[id]);
         }
         coref<T,NumDims-1> operator[](int i){ 
             return (*data)[i];
