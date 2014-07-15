@@ -59,9 +59,6 @@ class coref {
             std::copy(sz, sz + NumDims, &size[0]);
         }
         coref(T *addr, int id, array<int,NumDims> sz): coref(addr, id, sz.data()) {}
-        //coref(T *addr, int id, array<int,NumDims> sz):node_id(id), data(addr) {
-        //    std::copy(sz.front(), sz.back(), &size[0])
-        //}
         coref<T,NumDims-1> operator[](int i){ 
             int slice_size = 1;
             for(int i = 1; i < NumDims; i++) {
@@ -79,9 +76,9 @@ class coref {
 template<typename T>
 class coref <T,1>{
     public:
+        coref(T *addr, int id, int sz[1]):node_id(id), data(addr), size(sz[0]){}
+        coref(T *addr, int id, array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
         void print(){
-            //This prints data directly from data that does not exist locall.
-            //The data needs to be retrieved before being printed.
             for(int i=0; i < size; i++){
                 T tmp = data[i];
                 cout << tmp;
@@ -91,11 +88,11 @@ class coref <T,1>{
             }
             cout << endl;
         }
-        coref(T *addr, int id, int sz[1]):node_id(id), data(addr), size(sz[0]){}
-        coref(T *addr, int id, array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
         }
+        //coref<T,1>& operator=(coref<T,1> & other){}
+        //coref<T,1>& operator=(T const& other){
     private:
         T *data;
         int node_id;
@@ -112,15 +109,13 @@ class coref<T,0> {
         }
         //TODO: define other operators, like += and >>
         coref<T,0>& operator=(coref<T,0> & other){
-            *this = T(other.data);
+            this->data = T(other);
             return *this;
         }
         operator T() {
             T tmp;
             if(node_id != this_image()){
-                //cout << "Getting from node " << node_id << ": ";
                 gasnet_get(&tmp, node_id, data, sizeof(T));
-                //cout << tmp << endl;
                 return tmp;
             }
             return *data;
@@ -128,7 +123,6 @@ class coref<T,0> {
         coref<T,0>& operator=(T const& other){
             T tmp = other;
             if(this_image() != node_id) {
-                //cout << "putting " << other << "on node " << node_id << endl;
                 gasnet_put(node_id, data, &tmp, sizeof(T));
             } else {
                 *data = other;
