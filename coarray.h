@@ -1,10 +1,12 @@
 #include <iostream>
+#include <array>
 
 #define GASNET_PAR 1
 #include "gasnet.h"
 
 using std::cout;
 using std::endl;
+using std::array;
 
 /* Macro to check return codes and terminate with useful message. */
 #define GASNET_SAFE(fncall) do {                                    \
@@ -54,16 +56,18 @@ template<typename T, int NumDims>
 class coref {
     public:
         coref(T *address, int id, int sz[NumDims]):node_id(id), data(address) {
-            std::copy(sz, sz + NumDims, size);
+            std::copy(sz, sz + NumDims, &size[0]);
         }
+        coref(T *addr, int id, array<int,NumDims> sz): coref(addr, id, sz.data()) {}
+        //coref(T *addr, int id, array<int,NumDims> sz):node_id(id), data(addr) {
+        //    std::copy(sz.front(), sz.back(), &size[0])
+        //}
         coref<T,NumDims-1> operator[](int i){ 
-            int newsize[NumDims-1];
             int slice_size = 1;
             for(int i = 1; i < NumDims; i++) {
                 slice_size *= size[i];
             }
-            std::copy(size+1, size + NumDims, newsize);
-            return coref<T,NumDims-1>(data + i*slice_size, node_id, newsize);
+            return coref<T,NumDims-1>(data + i*slice_size, node_id, &size[1]);
         }
     private:
         T *data;
@@ -79,14 +83,16 @@ class coref <T,1>{
             //This prints data directly from data that does not exist locall.
             //The data needs to be retrieved before being printed.
             for(int i=0; i < size; i++){
-                cout << data[i];
+                T tmp = data[i];
+                cout << tmp;
                 if(i < size-1) {
                     cout << ", ";
                 }
             }
             cout << endl;
         }
-        coref(T *address, int id, int sz[1]):node_id(id), data(address), size(sz[0]){}
+        coref(T *addr, int id, int sz[1]):node_id(id), data(addr), size(sz[0]){}
+        coref(T *addr, int id, array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
         }
@@ -104,7 +110,7 @@ class coref<T,0> {
             data = address;
             node_id = id;
         }
-        //TODO: define other operators, like +=
+        //TODO: define other operators, like += and >>
         coref<T,0>& operator=(coref<T,0> & other){
             *this = T(other.data);
             return *this;
@@ -138,6 +144,7 @@ class coref<T,0> {
 template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
+        coarray(array< int, NumDims> size):coarray(size.data()) {}
         coarray(int size[NumDims]){
             int local_size= 1;
             for(int i=0; i < NumDims; i++){
