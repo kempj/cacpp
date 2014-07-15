@@ -55,8 +55,12 @@ class coref {
         }
         coref<T,NumDims-1> operator[](int i){ 
             int newsize[NumDims-1];
+            int slice_size = 1;
+            for(int i = 1; i < NumDims; i++) {
+                slice_size *= size[i];
+            }
             std::copy(size+1, size + NumDims, newsize);
-            return coref<T,NumDims-1>(data + i*size[1], node_id, newsize);
+            return coref<T,NumDims-1>(data + i*slice_size, node_id, newsize);
         }
     private:
         T *data;
@@ -69,6 +73,8 @@ template<typename T>
 class coref <T,1>{
     public:
         void print(){
+            //This prints data directly from data that does not exist locall.
+            //The data needs to be retrieved before being printed.
             for(int i=0; i < size; i++){
                 cout << data[i];
                 if(i < size-1) {

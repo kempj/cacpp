@@ -212,6 +212,8 @@ int main(int argc, char **argv)
     coarray<int,2> C(extent3);
     int counter = 1;
 
+    
+
     for(int i = 0; i < extents[0]; i++) {
         for(int j=0; j < extents[1]; j++) {
             A[i][j] = i;
@@ -227,7 +229,8 @@ int main(int argc, char **argv)
             }
         }
     }
-
+    cout << C(1)[0][0] << endl;
+/*
     cout << "A: " << endl;
     for(int i =0; i < 5; i++) {
         A[i].print();
@@ -240,16 +243,7 @@ int main(int argc, char **argv)
     for(int i =0; i < 5; i++) {
         C[i].print();
     }
-    /*
-    if(this_image() == 0) {
-        for(int i = 0; i < 5; i++) {
-            for(int j = 0; j < 5; j++) {
-                cout << C[i][j] << ", ";
-            }
-            cout << endl;
-        }
-    } */
     gasnet_exit(0);
-
+*/
     return 1;
 }
