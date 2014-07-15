@@ -36,14 +36,17 @@ int num_images(){
 
 void sync_all() {
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    int status = gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    if(GASNET_OK != status)
+        cout << "error while syncing all" << endl;
 }
-
 
 void remote_init(){
     if(!segment_info) {
         segment_info =  new gasnet_seginfo_t[num_images()];
-        GASNET_SAFE(gasnet_getSegmentInfo(segment_info, num_images()));
+        int status = gasnet_getSegmentInfo(segment_info, num_images());
+        if( GASNET_OK != status)
+            cout << "failed to get segment info" << endl;
     }
 }
 
