@@ -205,6 +205,7 @@ int main(int argc, char **argv)
     int id = this_image();
     int team_size = num_images();
     std::array<int,2> extents = {5, 3};
+    std::array<int,2> codims = {2, 2};
     coarray<int,2> A(extents);
     coarray<int,2> B(extents);
 

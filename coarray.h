@@ -57,20 +57,31 @@ class coref {
     public:
         coref(T *address, int id, int sz[NumDims]):node_id(id), data(address) {
             std::copy(sz, sz + NumDims, &size[0]);
+            total_size = 1;//TMP
+            slice_size = 1;
+            for(int i = 0; i < NumDims; i++) {
+                total_size *= size[i];
+                if(i > 0) {
+                    slice_size *= size[i];
+                }
+            }
         }
         coref(T *addr, int id, array<int,NumDims> sz): coref(addr, id, sz.data()) {}
         coref<T,NumDims-1> operator[](int i){ 
-            int slice_size = 1;
-            for(int i = 1; i < NumDims; i++) {
-                slice_size *= size[i];
-            }
             return coref<T,NumDims-1>(data + i*slice_size, node_id, &size[1]);
+        }
+        coref<T,1> operator=(coref<T,1> other){
+            //assert(size == other.size);
+            std::copy(other.data, other.data + other.total_size, data);
+            return  *this;
         }
     private:
         T *data;
         int node_id;
         coref();
         int size[NumDims];
+        int total_size;
+        int slice_size;
 };
 
 template<typename T>
@@ -166,6 +177,13 @@ class coarray {
             //data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
             //remote_data[this_image()] = &(*data);
         }
+        //coarray<T,NumDims>& operator=(coref<T,NumDims> &other) {
+        coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
+            //if they are both on same node (and not same array) 
+            // then just swap pointers.
+            //Same array, different nodes?
+            //
+        }
         coref<T,NumDims>& operator()(int id){
             return *(remote_data[id]);
         }
@@ -176,6 +194,7 @@ class coarray {
             return (*data)[i];
         }
     private:
+        //int codims[];
         int extents[NumDims];
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
