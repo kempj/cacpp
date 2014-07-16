@@ -83,7 +83,6 @@ int main(int argc, char **argv)
                 cout << A(i%team_size)[i][j] << ", ";
             }
             cout << endl;
-            //A(i%team_size)[i].print();
         }
         cout << "\nB: " << endl;
         for(int i =0; i < e2[0]; i++) {
@@ -91,7 +90,6 @@ int main(int argc, char **argv)
                 cout << B(i%team_size)[i][j] << ", ";
             }
             cout << endl;
-            //B(i%team_size)[i].print();
         }
         cout << "\nC: " << endl;
         for(int i =0; i < e3[0]; i++) {
@@ -99,7 +97,6 @@ int main(int argc, char **argv)
                 cout << C(i%team_size)[i][j] << ", ";
             }
             cout << endl;
-            //C(i%team_size)[i].print();
         }
     }
     sync_all();

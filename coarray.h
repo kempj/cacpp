@@ -78,21 +78,21 @@ class coref <T,1>{
     public:
         coref(T *addr, int id, int sz[1]):node_id(id), data(addr), size(sz[0]){}
         coref(T *addr, int id, array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
-        void print(){
-            for(int i=0; i < size; i++){
-                T tmp = data[i];
-                cout << tmp;
-                if(i < size-1) {
-                    cout << ", ";
-                }
-            }
-            cout << endl;
-        }
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
         }
-        //coref<T,1>& operator=(coref<T,1> & other){}
-        //coref<T,1>& operator=(T const& other){
+        coref<T,1>& operator=(coref<T,1> & other){
+            //assert(size == other.size);
+            std::copy(other.data, other.data + othersize, data);
+        }
+        coref<T,1>& operator=(T* const other){
+            std::copy(other, other + size, data);
+        }
+        coref<T,1>& operator=(std::array<T,1> other){
+            //assert(other.size() == size);
+            std::copy(other.begin(), other.end(), data);
+        }
+        //operator T*() {}
     private:
         T *data;
         int node_id;
@@ -138,7 +138,7 @@ class coref<T,0> {
 template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
-        coarray(array< int, NumDims> size):coarray(size.data()) {}
+        coarray(array<int,NumDims> const & size) : coarray(size.data()) {}
         coarray(int size[NumDims]){
             int local_size= 1;
             for(int i=0; i < NumDims; i++){

@@ -205,31 +205,13 @@ int main(int argc, char **argv)
     int id = this_image();
     int team_size = num_images();
     int extents[2] = {5, 3};
-    coarray<int,2> A(extents);
-    int extent2[2] = {3, 5};
-    coarray<int,2> B(extent2);
-    int extent3[2] = {5, 5};
-    coarray<int,2> C(extent3);
-    int counter = 1;
+    coarray<int,2> A({5,3});
 
     
 
     for(int i = 0; i < extents[0]; i++) {
-        for(int j=0; j < extents[1]; j++) {
-            A[i][j] = i;
-            B[j][i] = j;//counter;
-            counter++;
-        }
     }
 
-    for(int row = 0; row < 5; row++) {
-        for(int col = 0; col < 5; col++) {
-            for(int inner = 0; inner < 3; inner++) {
-                C[row][col] = C[row][col] + A[row][inner] * B[inner][col];
-            }
-        }
-    }
-    cout << C(1)[0][0] << endl;
 /*
     cout << "A: " << endl;
     for(int i =0; i < 5; i++) {
