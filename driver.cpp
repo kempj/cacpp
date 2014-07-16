@@ -204,13 +204,53 @@ int main(int argc, char **argv)
 
     int id = this_image();
     int team_size = num_images();
-    int extents[2] = {5, 3};
-    coarray<int,2> A({5,3});
+    std::array<int,2> extents = {5, 3};
+    coarray<int,2> A(extents);
+    coarray<int,2> B(extents);
 
     
 
-    for(int i = 0; i < extents[0]; i++) {
+    for(int i = 0; i < extents[1]; i++) {
+        A[0][i] = i;
+        B[0][i] = i + extents[0];
+        A[1][i] = -1;
+        B[1][i] = -2;
     }
+
+    cout << "A[0] before: ";
+    for(int i = 0; i < extents[1]; i++) {
+        cout << A[0][i] << ", ";
+    }
+    cout << endl;
+    cout << "B[0] before: ";
+    for(int i = 0; i < extents[1]; i++) {
+        cout << B[0][i] << ", ";
+    }
+    cout << endl;
+
+    A[1] = B[0];
+    B[1] = A[0];
+
+    cout << "A[0] after : ";
+    for(int i = 0; i < extents[1]; i++) {
+        cout << A[0][i] << ", ";
+    }
+    cout << endl;
+    cout << "A[1] after : ";
+    for(int i = 0; i < extents[1]; i++) {
+        cout << A[1][i] << ", ";
+    }
+    cout << endl;
+    cout << "B[0] after : ";
+    for(int i = 0; i < extents[1]; i++) {
+        cout << B[0][i] << ", ";
+    }
+    cout << endl;
+    cout << "B[1] after : ";
+    for(int i = 0; i < extents[1]; i++) {
+        cout << B[1][i] << ", ";
+    }
+    cout << endl;
 
 /*
     cout << "A: " << endl;

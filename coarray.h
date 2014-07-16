@@ -81,16 +81,24 @@ class coref <T,1>{
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
         }
-        coref<T,1>& operator=(coref<T,1> & other){
+        coref<T,1>& operator=(coref<T,1> &other){
             //assert(size == other.size);
             std::copy(other.data, other.data + other.size, data);
+            return  *this;
+        }
+        coref<T,1> operator=(coref<T,1> other){
+            //assert(size == other.size);
+            std::copy(other.data, other.data + other.size, data);
+            return  *this;
         }
         coref<T,1>& operator=(T* const other){
             std::copy(other, other + size, data);
+            return  *this;
         }
         coref<T,1>& operator=(std::array<T,1> other){
             //assert(other.size() == size);
             std::copy(other.begin(), other.end(), data);
+            return  *this;
         }
         //operator T*() {}
     private:
