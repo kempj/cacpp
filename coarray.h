@@ -83,7 +83,7 @@ class coref <T,1>{
         }
         coref<T,1>& operator=(coref<T,1> & other){
             //assert(size == other.size);
-            std::copy(other.data, other.data + othersize, data);
+            std::copy(other.data, other.data + other.size, data);
         }
         coref<T,1>& operator=(T* const other){
             std::copy(other, other + size, data);
