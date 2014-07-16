@@ -139,7 +139,7 @@ template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
         coarray(array<int,NumDims> const & size) : coarray(size.data()) {}
-        coarray(int size[NumDims]){
+        coarray(const int size[NumDims]){
             int local_size= 1;
             for(int i=0; i < NumDims; i++){
                 local_size*= size[i];
@@ -148,7 +148,7 @@ class coarray {
             remote_init();
             remote_data = new coref<T,NumDims>*[num_images()];
             for(int i = 0; i < num_images(); i++) {
-                remote_data[i] = new coref<T,NumDims>((T*)(segment_info[i].addr + data_size), i, extents);
+                remote_data[i] = new coref<T,NumDims>(((T*)segment_info[i].addr + data_size), i, extents);
             }
             data = remote_data[this_image()];
             data_size += (local_size * sizeof(T));
