@@ -207,7 +207,7 @@ int main(int argc, char **argv)
     std::array<int,2> extents = {5, 3};
     std::array<int,2> codims = {2, 2};
     coarray<int,2> A(extents);
-    coarray<int,2> B(extents);
+    coarray<int,2> B(dims(4,4));
 
     
 

@@ -1,5 +1,9 @@
 #include <iostream>
 #include <array>
+#include <cstdarg>
+
+#include "dims.h"
+#include "codims.h"
 
 #define GASNET_PAR 1
 #include "gasnet.h"
@@ -157,8 +161,15 @@ class coref<T,0> {
 template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
+        coarray(dims size, codims cosize) : coarray(size.D) {
+            codim_size = cosize.size;
+            codims = cosize.D;//assert codims.size == NumDims;
+            //assert codim1 * codim2 *... = num_images
+        }
+
+        coarray(dims size) : coarray(size.D) {}
         coarray(array<int,NumDims> const & size) : coarray(size.data()) {}
-        coarray(const int size[NumDims]){
+        coarray(const int size[NumDims]): codim_size(0){
             int local_size= 1;
             for(int i=0; i < NumDims; i++){
                 local_size*= size[i];
@@ -177,6 +188,7 @@ class coarray {
             //data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
             //remote_data[this_image()] = &(*data);
         }
+
         //coarray<T,NumDims>& operator=(coref<T,NumDims> &other) {
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             //if they are both on same node (and not same array) 
@@ -184,8 +196,16 @@ class coarray {
             //Same array, different nodes?
             //
         }
-        coref<T,NumDims>& operator()(int id){
-            return *(remote_data[id]);
+        coref<T,NumDims>& operator()(int id, ...){
+            int index = id;
+            va_list args;
+            va_start(args, id);
+            for(int i = 0; i < codim_size; i++){
+                index = va_arg(args, int);
+            }
+            va_end(args);
+
+            return *(remote_data[index]);
         }
         coref<T,NumDims-1> operator[](int i){ 
             return (*data)[i];
@@ -194,7 +214,8 @@ class coarray {
             return (*data)[i];
         }
     private:
-        //int codims[];
+        int codim_size;
+        int *codims;
         int extents[NumDims];
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
