@@ -4,7 +4,7 @@ struct dims {
     int *D;
 
     dims(): size(0){ }
-
+/*
 template<class... Ts>
     dims(Ts...) {
         size = sizeof...(Ts);
@@ -16,7 +16,7 @@ template<class... Ts>
             counter++;
         }
     }
-    /*
+    */
     dims(int dim1): size(1){
         D = new int;
         D[0] = dim1;
@@ -58,5 +58,5 @@ template<class... Ts>
     }
     ~dims(){
         delete[] D;
-    }*/
+    }
 };

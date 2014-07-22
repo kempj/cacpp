@@ -4,14 +4,14 @@ struct codims {
     int *D;
 
     codims(): size(0){ }
-
+/*
 template<class... Ts>
     codims(Ts...) {
         size = sizeof...(Ts);
         D = new int[size];
         *D={Ts...};
     }
-    /*
+    */
     codims(int dim1): size(1){
         D = new int;
         D[0] = dim1;
@@ -50,7 +50,7 @@ template<class... Ts>
         D[3] = dim4;
         D[4] = dim5;
         D[5] = dim6;
-    }*/
+    }
     ~codims(){
         delete[] D;
     }
