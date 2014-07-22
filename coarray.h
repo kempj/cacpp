@@ -167,7 +167,9 @@ class coarray {
         }
 
         coarray(dims size) : coarray(size.D) {}
+
         coarray(array<int,NumDims> const & size) : coarray(size.data()) {}
+
         coarray(const int size[NumDims]){
             if(codims.size() == 0)
                 codims.push_back(1);
@@ -201,16 +203,20 @@ class coarray {
             return *(remote_data[this_image()]);
         }
         coref<T,NumDims>& operator()(int id, ...){
-            int index = codims[0] * id;
             va_list args;
             va_start(args, id);
+            std::vector<int> index;
+            index.push_back(id);
             for(int i = 1; i < codims.size(); i++){
-                int current_index = va_arg(args, int);
-                index = index + codims[i] * current_index;
+                index.push_back(va_arg(args, int));
             }
             va_end(args);
 
-            return *(remote_data[index]);
+            int current_index = index.back();
+            for(int i = index.size()-1; i > 0; i--){
+                current_index += index[i-1] * codims[i];
+            }
+            return *(remote_data[current_index]);
         }
         coref<T,NumDims-1> operator[](int i){ 
             return (*data)[i];

@@ -197,20 +197,14 @@ void test2() {
     }
 }
 
-int main(int argc, char **argv) 
-{
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
+void test3() {
 
     int id = this_image();
     int team_size = num_images();
     std::array<int,2> extents = {5, 3};
-    std::array<int,2> codims = {2, 2};
-    coarray<int,2> A(extents);
-    coarray<int,2> B(dims(4,4));
-
-    
-
+    //std::array<int,2> codims = {2, 2};
+    coarray<int,2> A(dims{5,3}, codims{2,2});
+    coarray<int,2> B(dims{4,4}, codims{2,2});
     for(int i = 0; i < extents[1]; i++) {
         A[0][i] = i;
         B[0][i] = i + extents[0];
@@ -265,8 +259,39 @@ int main(int argc, char **argv)
     cout << "C: " << endl;
     for(int i =0; i < 5; i++) {
         C[i].print();
+    }*/
+}
+
+int main(int argc, char **argv) 
+{
+    GASNET_SAFE(gasnet_init(&argc, &argv));
+    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
+
+    int id = this_image();
+    int team_size = num_images();
+    std::array<int,2> extents = {5, 3};
+    //std::array<int,2> codims = {2, 2};
+    coarray<int,2> A(dims{5,3}, codims{2,2});
+    coarray<int,2> B(dims{4,4}, codims{2,2});
+    
+    if(this_image() == 0) {
+        A(0,0)[0][0] = 1;
+        A(0,1)[0][0] = 2;
+        A(1,0)[0][0] = 3;
+        A(1,1)[0][0] = 4;
     }
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
+    for(int i = 0; i < 4; i++) {
+        if(this_image() == i) {
+            cout << "A[0][0] = " <<  A[0][0] << endl;
+        }
+        gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+        gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    }
+
     gasnet_exit(0);
-*/
+
     return 1;
 }

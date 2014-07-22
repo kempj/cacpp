@@ -1,9 +1,5 @@
 #include "coarray.h"
 
-int e1[] = {3,2};
-int e2[] = {2,3};
-int e3[] = {3,3};
-
 void init2D(coarray<int, 2> array, int extents[2]){
     for(int i = 0; i < extents[0]; i++) {
         for(int j = 0; j < extents[1]; j++) {
@@ -64,6 +60,11 @@ int main(int argc, char **argv)
 
     int id = this_image();
     int team_size = num_images();
+
+    int e1[] = {3,2};
+    int e2[] = {2,3};
+    int e3[] = {3,3};
+
     coarray<int,2> A(e1);
     coarray<int,2> B(e2);
     coarray<int,2> C(e3);
