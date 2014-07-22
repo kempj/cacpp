@@ -209,23 +209,29 @@ class coref<T,0> {
         T *data;
 };
 
-template<typename T, int NumDims>//int NumCoDims>
+template<typename T, int NumDims>
 class coarray {
     public:
         coarray(dims size, codims cosize) : coarray(size.D) {
             codims = cosize.D;
             //assert codim1 * codim2 *... = num_images
         }
-
-        coarray(dims size) : coarray(size.D) {}
-
-        coarray(array<int,NumDims> const & size) : coarray(size.data()) {}
-
+        coarray(array<int,NumDims> const & dim, array<int,NumDims> const & codim) : coarray(dim.data()) {
+            codims = codim;
+            //std::copy(codim.begin(), codim.end(), 
+        }
+        coarray(const int dim[NumDims], const int codim[NumDims]) : coarray(dim){
+            codims = codim
+        }
+        coarray(dims size) : coarray(size.D) {
+        }
+        coarray(array<int,NumDims> const & size) : coarray(size.data()) {
+        }
         coarray(const int size[NumDims]){
             if(codims.size() == 0)
                 codims.push_back(1);
 
-            int local_size= 1;
+            int local_size=1;
             for(int i=0; i < NumDims; i++){
                 local_size*= size[i];
                 extents[i] = size[i];
@@ -239,7 +245,6 @@ class coarray {
             data_size += (local_size * sizeof(T));
         }
 
-        //coarray<T,NumDims>& operator=(coref<T,NumDims> &other) {
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             //if they are both on same node (and not same array) 
             // then just swap pointers.
