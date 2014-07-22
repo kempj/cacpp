@@ -75,6 +75,7 @@ class coref {
             return coref<T,NumDims-1>(data + i*slice_size, node_id, &size[1]);
         }
         coref<T,NumDims> operator=(coref<T,NumDims> other){
+            //TODO: this does not work for dim > 2 for remote nodes
             assert(size == other.size);
             std::copy(other.data, other.data + other.total_size, data);
             return *this;
@@ -230,7 +231,6 @@ class coarray {
         coarray(const int size[NumDims]){
             if(codims.size() == 0)
                 codims.push_back(1);
-
             int local_size=1;
             for(int i=0; i < NumDims; i++){
                 local_size*= size[i];
@@ -244,8 +244,8 @@ class coarray {
             data = remote_data[this_image()];
             data_size += (local_size * sizeof(T));
         }
-
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
+            //TODO: get this working
             //if they are both on same node (and not same array) 
             // then just swap pointers.
             //Same array, different nodes?
