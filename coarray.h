@@ -85,6 +85,16 @@ class coref {
         coref<T, NumDims-1> end() { 
             return coref<T,NumDims-1>(data + (size[0]-1)*slice_size, node_id, &size[1]);
         }
+        bool operator!=(const coref<T,NumDims> other) const {
+            return !( (data == other.data) && (node_id == other.node_id) );
+        }
+        const coref<T,NumDims> operator++() {
+            data += slice_size;
+            return *this;
+        }
+        coref<T,1> operator*() {
+            return *this;
+        }
     private:
         T *data;
         int node_id;
@@ -152,7 +162,6 @@ class coref <T,1> {
         }
         const coref<T,1> operator++() {
             data += size;
-            //return coref<T,1>(data + size, node_id, size);
             return *this;
         }
         coref<T,1> operator*() {
