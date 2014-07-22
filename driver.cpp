@@ -308,6 +308,14 @@ int main(int argc, char **argv)
             }
             cout << A[i][3] << endl;
         }
+
+        for(int i = 1; i < 2; i++) {
+            cout << "A[" << i << "] range based:" << endl;
+            for(auto entry : A[i]) {
+                cout << entry << ", ";
+            }
+            cout << A[i][3] << endl;
+        }
     }
 
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);

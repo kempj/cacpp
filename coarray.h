@@ -30,7 +30,7 @@ using std::array;
 
 
 gasnet_seginfo_t *segment_info;
-int64_t data_size=0;
+int64_t data_size=0;//Needed globally to keep track of the beginning of each new coarray
 
 
 int this_image(){
@@ -95,12 +95,7 @@ class coref <T,1> {
         coref(T *addr, int id, array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
-        }/*
-        coref<T,1>& operator=(coref<T,1> &other){
-            assert(size == other.size);
-            std::copy(other.data, other.data + other.size, data);
-            return  *this;
-        }*/
+        }
         coref<T,1> operator=(coref<T,1> other){
             assert(size == other.size);
             
@@ -136,6 +131,12 @@ class coref <T,1> {
             assert(other.size() == size);
             std::copy(other.begin(), other.end(), data);
             return *this;
+        }
+        T* begin() {
+            return &data[0];
+        }
+        T* end() {
+            return &data[size-1];
         }
     private:
         T *data;
