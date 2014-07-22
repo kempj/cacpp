@@ -1,6 +1,7 @@
 #include <iostream>
 #include <array>
 #include <cstdarg>
+#include <cassert>
 
 #include "dims.h"
 #include "codims.h"
@@ -75,7 +76,7 @@ class coref {
             return coref<T,NumDims-1>(data + i*slice_size, node_id, &size[1]);
         }
         coref<T,1> operator=(coref<T,1> other){
-            //assert(size == other.size);
+            assert(size == other.size);
             std::copy(other.data, other.data + other.total_size, data);
             return  *this;
         }
@@ -89,33 +90,54 @@ class coref {
 };
 
 template<typename T>
-class coref <T,1>{
+class coref <T,1> {
     public:
         coref(T *addr, int id, int sz[1]):node_id(id), data(addr), size(sz[0]){}
         coref(T *addr, int id, array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
-        }
+        }/*
         coref<T,1>& operator=(coref<T,1> &other){
-            //assert(size == other.size);
+            assert(size == other.size);
             std::copy(other.data, other.data + other.size, data);
             return  *this;
-        }
+        }*/
         coref<T,1> operator=(coref<T,1> other){
-            //assert(size == other.size);
-            std::copy(other.data, other.data + other.size, data);
-            return  *this;
+            assert(size == other.size);
+            
+            if((node_id == this_image()) && (other.node_id == this_image())) {
+                std::copy(other.data, other.data + other.size, data);
+                return *this;
+            }
+
+            T *tmp_data = data;
+            if( other.node_id != this_image() ) {//rhs is remote
+                if( node_id != this_image() ) {//both sides are remote
+                    tmp_data = new T[size];
+                }
+                gasnet_get_bulk(tmp_data, other.node_id, other.data, size * sizeof(T));
+            }
+            if( node_id != this_image() ) {//lhs is remote
+                //send data
+                gasnet_put_bulk(node_id, data, tmp_data, size*sizeof(T));
+            }
+            if( tmp_data != data)
+                delete[] tmp_data;
+            return *this;
         }
+
         coref<T,1>& operator=(T* const other){
+            if( node_id != this_image() ) {
+            }
             std::copy(other, other + size, data);
-            return  *this;
+            return *this;
         }
         coref<T,1>& operator=(std::array<T,1> other){
-            //assert(other.size() == size);
+            cout << "operator= 4" << endl;
+            assert(other.size() == size);
             std::copy(other.begin(), other.end(), data);
-            return  *this;
+            return *this;
         }
-        //operator T*() {}
     private:
         T *data;
         int node_id;
@@ -202,12 +224,16 @@ class coarray {
         coref<T,NumDims>& operator()(){
             return *(remote_data[this_image()]);
         }
-        coref<T,NumDims>& operator()(int id, ...){
+        coref<T,NumDims>& operator()(int id){
+            return *(remote_data[id]);
+        }
+        coref<T,NumDims>& operator()(int first, int second, ...){
             va_list args;
-            va_start(args, id);
+            va_start(args, second);
             std::vector<int> index;
-            index.push_back(id);
-            for(int i = 1; i < codims.size(); i++){
+            index.push_back(first);
+            index.push_back(second);
+            for(int i = 2; i < codims.size(); i++){
                 index.push_back(va_arg(args, int));
             }
             va_end(args);
