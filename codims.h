@@ -1,17 +1,16 @@
+#include <vector>
 
 struct codims {
     int size;
-    int *D;
+    //int *D;
+    std::vector<int> D;
 
     codims(): size(0){ }
-/*
-template<class... Ts>
-    codims(Ts...) {
-        size = sizeof...(Ts);
-        D = new int[size];
-        *D={Ts...};
+
+    codims(std::initializer_list<int> l): D(l) {
+        size = l.size();
     }
-    */
+    /*
     codims(int dim1): size(1){
         D = new int;
         D[0] = dim1;
@@ -53,5 +52,5 @@ template<class... Ts>
     }
     ~codims(){
         delete[] D;
-    }
+    }*/
 };

@@ -162,14 +162,16 @@ template<typename T, int NumDims>//int NumCoDims>
 class coarray {
     public:
         coarray(dims size, codims cosize) : coarray(size.D) {
-            codim_size = cosize.size;
-            codims = cosize.D;//assert codims.size == NumDims;
+            codims = cosize.D;
             //assert codim1 * codim2 *... = num_images
         }
 
         coarray(dims size) : coarray(size.D) {}
         coarray(array<int,NumDims> const & size) : coarray(size.data()) {}
-        coarray(const int size[NumDims]): codim_size(0){
+        coarray(const int size[NumDims]){
+            if(codims.size() == 0)
+                codims.push_back(1);
+
             int local_size= 1;
             for(int i=0; i < NumDims; i++){
                 local_size*= size[i];
@@ -194,14 +196,17 @@ class coarray {
             //if they are both on same node (and not same array) 
             // then just swap pointers.
             //Same array, different nodes?
-            //
+        }
+        coref<T,NumDims>& operator()(){
+            return *(remote_data[this_image()]);
         }
         coref<T,NumDims>& operator()(int id, ...){
-            int index = id;
+            int index = codims[0] * id;
             va_list args;
             va_start(args, id);
-            for(int i = 0; i < codim_size; i++){
-                index = va_arg(args, int);
+            for(int i = 1; i < codims.size(); i++){
+                int current_index = va_arg(args, int);
+                index = index + codims[i] * current_index;
             }
             va_end(args);
 
@@ -214,8 +219,7 @@ class coarray {
             return (*data)[i];
         }
     private:
-        int codim_size;
-        int *codims;
+        std::vector<int> codims;
         int extents[NumDims];
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
