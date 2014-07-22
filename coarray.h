@@ -30,7 +30,6 @@ using std::array;
 
 
 gasnet_seginfo_t *segment_info;
-//int num_coarrays=0;
 int64_t data_size=0;
 
 
@@ -208,11 +207,6 @@ class coarray {
             }
             data = remote_data[this_image()];
             data_size += (local_size * sizeof(T));
-            //id = num_coarrays;
-            //num_coarrays++;
-            //T *local_data = new T[data_size];
-            //data = new coref<T,NumDims>(local_data, this_image(), extents[0]);
-            //remote_data[this_image()] = &(*data);
         }
 
         //coarray<T,NumDims>& operator=(coref<T,NumDims> &other) {
@@ -255,5 +249,4 @@ class coarray {
         int extents[NumDims];
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
-        //int id;
 };
