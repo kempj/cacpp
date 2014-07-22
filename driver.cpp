@@ -201,9 +201,9 @@ void test3() {
 
     int id = this_image();
     int team_size = num_images();
-    std::array<int,2> extents = {5, 3};
+    std::array<int,2> extents = {4,4};
     //std::array<int,2> codims = {2, 2};
-    coarray<int,2> A(dims{5,3}, codims{2,2});
+    coarray<int,2> A(dims{4,4}, codims{2,2});
     coarray<int,2> B(dims{4,4}, codims{2,2});
     for(int i = 0; i < extents[1]; i++) {
         A[0][i] = i;
@@ -275,8 +275,8 @@ int main(int argc, char **argv)
     if(this_image() == 0) {
         A(0,0)[0][0] = 1;
         A(0,1)[0][0] = 2;
-    //    A(1,0)[0][0] = 3;
-    //    A(1,1)[0][0] = 4;
+        A(1,0)[0][0] = 3;
+        A(1,1)[0][0] = 4;
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
@@ -293,15 +293,15 @@ int main(int argc, char **argv)
         cout << "getting A(0,1)[0]" << endl;
         A[1] = A(0,1)[0];
         cout << "getting A(1,0)[0]" << endl;
-//        A[2] = A(1,0)[0];
-//        cout << "getting A(1,1)[0]" << endl;
-//        A[3] = A(1,1)[0];
+        A[2] = A(1,0)[0];
+        cout << "getting A(1,1)[0]" << endl;
+        A[3] = A(1,1)[0];
     }
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
 
     if(this_image() == 0) {
-        for(int i = 1; i < 2; i++) {
+        for(int i = 0; i < 4; i++) {
             cout << "A[" << i << "] :" << endl;
             for(int j = 0; j < 3; j++) {
                 cout << A[i][j] << ", ";
@@ -309,15 +309,38 @@ int main(int argc, char **argv)
             cout << A[i][3] << endl;
         }
 
-        for(int i = 1; i < 2; i++) {
-            cout << "A[" << i << "] range based:" << endl;
-            for(auto entry : A[i]) {
+        //for(int i = 0; i < 4; i++) {
+        for(auto row : A) {
+            for(auto entry : row) {
                 cout << entry << ", ";
             }
-            cout << A[i][3] << endl;
+            cout << row[3] << endl;
         }
     }
 
+    /*
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    
+    if(this_image() == 0)
+        cout << endl << "test1" << endl;
+    test1();
+
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    
+    if(this_image() == 0)
+        cout << endl << "test2" << endl;
+    test2();
+
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+
+    if(this_image() == 0)
+        cout << endl << "test3" << endl;
+    test3();
+
+    */
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
 

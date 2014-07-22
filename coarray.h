@@ -74,10 +74,16 @@ class coref {
         coref<T,NumDims-1> operator[](int i){ 
             return coref<T,NumDims-1>(data + i*slice_size, node_id, &size[1]);
         }
-        coref<T,1> operator=(coref<T,1> other){
+        coref<T,NumDims> operator=(coref<T,NumDims> other){
             assert(size == other.size);
             std::copy(other.data, other.data + other.total_size, data);
-            return  *this;
+            return *this;
+        }
+        coref<T, NumDims-1> begin() {
+            return coref<T,NumDims-1>(data, node_id, &size[1]);
+        }
+        coref<T, NumDims-1> end() { 
+            return coref<T,NumDims-1>(data + (size[0]-1)*slice_size, node_id, &size[1]);
         }
     private:
         T *data;
@@ -91,8 +97,11 @@ class coref {
 template<typename T>
 class coref <T,1> {
     public:
+        coref(T *addr, int id, int sz):node_id(id), data(addr), size(sz){}
         coref(T *addr, int id, int sz[1]):node_id(id), data(addr), size(sz[0]){}
+
         coref(T *addr, int id, array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
+
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
         }
@@ -121,13 +130,13 @@ class coref <T,1> {
         }
 
         coref<T,1>& operator=(T* const other){
+            assert(false);
             if( node_id != this_image() ) {
             }
             std::copy(other, other + size, data);
             return *this;
         }
         coref<T,1>& operator=(std::array<T,1> other){
-            cout << "operator= 4" << endl;
             assert(other.size() == size);
             std::copy(other.begin(), other.end(), data);
             return *this;
@@ -137,6 +146,17 @@ class coref <T,1> {
         }
         T* end() {
             return &data[size-1];
+        }
+        bool operator!=(const coref<T,1> other) const {
+            return !( (data == other.data) && (node_id == other.node_id) );
+        }
+        const coref<T,1> operator++() {
+            data += size;
+            //return coref<T,1>(data + size, node_id, size);
+            return *this;
+        }
+        coref<T,1> operator*() {
+            return *this;
         }
     private:
         T *data;
@@ -244,6 +264,12 @@ class coarray {
         }
         const coref<T,NumDims-1>& operator[](int i) const { 
             return (*data)[i];
+        }
+        coref<T, NumDims-1> begin() {
+            return data->begin();
+        }
+        coref<T, NumDims-1> end() { 
+            return data->end();
         }
     private:
         std::vector<int> codims;
