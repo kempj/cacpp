@@ -25,9 +25,25 @@ class coref {
             return coref<T,NumDims-1>(data + i*slice_size, node_id, &size[1]);
         }
         coref<T,NumDims> operator=(coref<T,NumDims> other){
-            //TODO: this does not work for dim > 2 for remote nodes
-            assert(size == other.size);
-            std::copy(other.data, other.data + other.total_size, data);
+            assert(total_size == other.total_size);
+            
+            if((node_id == image_num) && (other.node_id == image_num)) {
+                std::copy(other.data, other.data + other.size, data);
+                return *this;
+            }
+
+            T *tmp_data = data;
+            if( other.node_id != image_num ) {//rhs is remote
+                if( node_id != image_num ) {//both sides are remote
+                    tmp_data = new T[size];
+                }
+                gasnet_get_bulk(tmp_data, other.node_id, other.data, total_size * sizeof(T));
+            }
+            if( node_id != image_num ) {//lhs is remote
+                gasnet_put_bulk(node_id, data, tmp_data, total_size*sizeof(T));
+            }
+            if( tmp_data != data )
+                delete[] tmp_data;
             return *this;
         }
         coref<T, NumDims-1> begin() {
@@ -58,32 +74,31 @@ class coref {
 template<typename T>
 class coref <T,1> {
     public:
-        coref(T *addr, int id, int sz):node_id(id), data(addr), size(sz){}
-        coref(T *addr, int id, int sz[1]):node_id(id), data(addr), size(sz[0]){}
+        coref(T *addr, int id, int sz):node_id(id), data(addr), total_size(sz){}
+        coref(T *addr, int id, int sz[1]):node_id(id), data(addr), total_size(sz[0]){}
 
-        coref(T *addr, int id, std::array<int,1> sz):node_id(id), data(addr), size(sz[0]){}
+        coref(T *addr, int id, std::array<int,1> sz):node_id(id), data(addr), total_size(sz[0]){}
 
         coref<T,0> operator[](int i){ 
             return coref<T,0>(data + i, node_id);
         }
         coref<T,1> operator=(coref<T,1> other){
-            assert(size == other.size);
+            assert(total_size == other.total_size);
             
             if((node_id == image_num) && (other.node_id == image_num)) {
-                std::copy(other.data, other.data + other.size, data);
+                std::copy(other.data, other.data + other.total_size, data);
                 return *this;
             }
 
             T *tmp_data = data;
             if( other.node_id != image_num ) {//rhs is remote
                 if( node_id != image_num ) {//both sides are remote
-                    tmp_data = new T[size];
+                    tmp_data = new T[total_size];
                 }
-                gasnet_get_bulk(tmp_data, other.node_id, other.data, size * sizeof(T));
+                gasnet_get_bulk(tmp_data, other.node_id, other.data, total_size * sizeof(T));
             }
             if( node_id != image_num ) {//lhs is remote
-                //send data
-                gasnet_put_bulk(node_id, data, tmp_data, size*sizeof(T));
+                gasnet_put_bulk(node_id, data, tmp_data, total_size*sizeof(T));
             }
             if( tmp_data != data)
                 delete[] tmp_data;
@@ -94,11 +109,11 @@ class coref <T,1> {
             assert(false);
             if( node_id != image_num ) {
             }
-            std::copy(other, other + size, data);
+            std::copy(other, other + total_size, data);
             return *this;
         }
         coref<T,1>& operator=(std::array<T,1> other){
-            assert(other.size() == size);
+            assert(other.size() == total_size);
             std::copy(other.begin(), other.end(), data);
             return *this;
         }
@@ -106,13 +121,13 @@ class coref <T,1> {
             return &data[0];
         }
         T* end() {
-            return &data[size-1];
+            return &data[total_size-1];
         }
         bool operator!=(const coref<T,1> other) const {
             return !( (data == other.data) && (node_id == other.node_id) );
         }
         const coref<T,1> operator++() {
-            data += size;
+            data += total_size;
             return *this;
         }
         coref<T,1> operator*() {
@@ -122,7 +137,7 @@ class coref <T,1> {
         T *data;
         int node_id;
         coref();
-        int size;
+        int total_size;
 };
 
 template<typename T>

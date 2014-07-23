@@ -296,7 +296,6 @@ int main(int argc, char **argv)
         }
     }
 
-    /*
     sync_all();
     
     if(this_image() == 0)
@@ -315,7 +314,6 @@ int main(int argc, char **argv)
         cout << endl << "test3" << endl;
     test3();
 
-    */
     sync_all();
 
     gasnet_exit(0);
