@@ -11,8 +11,7 @@ void test1() {
         test( (id+i) % team_size)[id] =  id ; 
     }
     
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(id == 0) {
         for( int i = 0; i < team_size; i++) {
@@ -23,15 +22,13 @@ void test1() {
         }
     }
     
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(0 == id) {
         cout << endl << "\nTesting to see if the assignments to local corefs work:" << endl;
         test(0)[0] = 20;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(0 == id) {
         cout << "\ttest(0)[0] from image 0: " << test(0)[0] 
@@ -39,27 +36,23 @@ void test1() {
         cout << "\ttest[0]    from image 0: " << test[0] 
              << " (should be 20)" << endl;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     if(1 == id) {
         cout << "\ttest(0)[0] from image 1: " << test(0)[0] 
              << " (should be 20)" << endl;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(0 == id) {
         cout << endl << "\nTesting to see if the assignments to remote corefs work:" << endl;
         test(1)[0] = 42;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     if(1 == id) {
         cout << "\ttest[0]    from image 1: " << test[0] 
              << " (should be 42)" << endl;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(0 == id) {
         cout << "\nTesting remote coref assignment to local coref (without parenthesis)" << endl;
@@ -67,58 +60,50 @@ void test1() {
         cout << "\ttest[0]    from image 0: " << test[0] 
              << " (should be 42)" << endl;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     if(1 == id) {
         cout << "\ttest(0)[0] from image 1: " << test(0)[0] 
              << " (should be 42)" << endl;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(0 == id) { 
         cout << "\nTesting remote coref + int assignment to local coref" << endl;
         test[1] = test(1)[0] + 1;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     for(int i = 0; i < 3; i++){
         if(id == i ) {
             cout << "\ttest(0)[1] from image " << i << ": " << test(0)[1] 
                  << " (should be 43)" << endl;
         }
-        gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-        gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+        sync_all();
     }
 
     if(0 == id) { 
         cout << "\nTesting remote coref to another remote coref" << endl;
         test(2)[0] = test(1)[0];
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     for(int i = 0; i < 3; i++){
         if(id == i ) {
             cout << "\ttest(2)[0] from image " << i << ": " << test(2)[0] 
                  << " (should be 42)" << endl;
         }
-        gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-        gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+        sync_all();
     }
 
     if(0 == id) { 
         cout << "\nTesting remote coref + int assignment to another remote coref" << endl;
         test(2)[1] = test(1)[0] + 1;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     for(int i = 0; i < 3; i++){
         if(id == i ) {
             cout << "\ttest(2)[1] from image " << i << ": " << test(2)[1] 
                  << " (should be 43)" << endl;
         }
-        gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-        gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+        sync_all();
     }
 
     if(0 == id) {
@@ -161,8 +146,7 @@ void test2() {
     }
     */
     
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     int extent2[] = {2,4};
     coarray<int,2> ca2(extent2);
@@ -171,16 +155,14 @@ void test2() {
     ca2[1][0] = 5;
     ca2[1][1] = 7;
     
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(id == 0) {
         cout << "ca2 = [[" << ca2[0][0] << ", " << ca2[0][1] << "], ["
                            << ca2[1][0] << ", " << ca2[1][1] << "]]" << endl;
     }
 
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     for( int i = 0; i < team_size; i++) {
         if(i == id) {
@@ -192,8 +174,7 @@ void test2() {
             }
             cout << endl;
         }
-        gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-        gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+        sync_all();
     }
 }
 
@@ -278,15 +259,13 @@ int main(int argc, char **argv)
         A(1,0)[0][0] = 3;
         A(1,1)[0][0] = 4;
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     for(int i = 0; i < 4; i++) {
         if(this_image() == i) {
             cout << "A[0][0] = " <<  A[0][0] << endl;
         }
-        gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-        gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+        sync_all();
     }
 
     if(this_image() == 0) {
@@ -297,8 +276,7 @@ int main(int argc, char **argv)
         cout << "getting A(1,1)[0]" << endl;
         A[3] = A(1,1)[0];
     }
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(this_image() == 0) {
         for(int i = 0; i < 4; i++) {
@@ -319,30 +297,26 @@ int main(int argc, char **argv)
     }
 
     /*
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     
     if(this_image() == 0)
         cout << endl << "test1" << endl;
     test1();
 
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
     
     if(this_image() == 0)
         cout << endl << "test2" << endl;
     test2();
 
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     if(this_image() == 0)
         cout << endl << "test3" << endl;
     test3();
 
     */
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    sync_all();
 
     gasnet_exit(0);
 

@@ -14,22 +14,6 @@ using std::cout;
 using std::endl;
 using std::array;
 
-/* Macro to check return codes and terminate with useful message. */
-#define GASNET_SAFE(fncall) do {                                    \
-    int _retval;                                                    \
-    if ((_retval = fncall) != GASNET_OK)                            \
-    {                                                               \
-        fprintf(stderr, "ERROR calling: %s\n"                       \
-                        " at: %s:%i\n"                              \
-                        " error: %s (%s)\n",                        \
-                        #fncall, __FILE__, __LINE__,                \
-              gasnet_ErrorName(_retval), gasnet_ErrorDesc(_retval));\
-        fflush(stderr);                                             \
-        gasnet_exit(_retval);                                       \
-    }                                                               \
-} while(0)
-
-
 gasnet_seginfo_t *segment_info;
 int image_num=-1;
 int64_t data_size=0;//Needed globally to keep track of the beginning of each new coarray
@@ -49,6 +33,9 @@ void sync_all() {
 }
 
 void remote_init(){
+    if(image_num < 0) {
+        image_num = this_image();
+    }
     if(!segment_info) {
         segment_info =  new gasnet_seginfo_t[num_images()];
         int status = gasnet_getSegmentInfo(segment_info, num_images());
@@ -60,23 +47,21 @@ void remote_init(){
 template<typename T, int NumDims>
 class coarray {
     public:
-        coarray(dims size, codims cosize) : coarray(size.D) {
+        coarray(dims size, codims cosize) : coarray(size.D.data()) {
             codims = cosize.D;
             //assert codim1 * codim2 *... = num_images
         }
         coarray(array<int,NumDims> const & dim, array<int,NumDims> const & codim) : coarray(dim.data()) {
             codims = codim;
-            //std::copy(codim.begin(), codim.end(), 
         }
         coarray(const int dim[NumDims], const int codim[NumDims]) : coarray(dim){
             codims = codim
         }
-        coarray(dims size) : coarray(size.D) {
+        coarray(dims size) : coarray(size.D.data()) {
         }
         coarray(array<int,NumDims> const & size) : coarray(size.data()) {
         }
         coarray(const int size[NumDims]){
-            image_num=this_image();
             if(codims.size() == 0)
                 codims.push_back(1);
             int local_size=1;
@@ -139,3 +124,19 @@ class coarray {
         coref<T, NumDims> *data;
         coref<T,NumDims> **remote_data;
 };
+
+/* Macro to check return codes and terminate with useful message. */
+#define GASNET_SAFE(fncall) do {                                    \
+    int _retval;                                                    \
+    if ((_retval = fncall) != GASNET_OK)                            \
+    {                                                               \
+        fprintf(stderr, "ERROR calling: %s\n"                       \
+                        " at: %s:%i\n"                              \
+                        " error: %s (%s)\n",                        \
+                        #fncall, __FILE__, __LINE__,                \
+              gasnet_ErrorName(_retval), gasnet_ErrorDesc(_retval));\
+        fflush(stderr);                                             \
+        gasnet_exit(_retval);                                       \
+    }                                                               \
+} while(0)
+

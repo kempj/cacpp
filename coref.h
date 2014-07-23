@@ -11,7 +11,7 @@ class coref {
     public:
         coref(T *address, int id, int sz[NumDims]):node_id(id), data(address) {
             std::copy(sz, sz + NumDims, &size[0]);
-            total_size = 1;//TMP
+            total_size = 1;
             slice_size = 1;
             for(int i = 0; i < NumDims; i++) {
                 total_size *= size[i];
