@@ -11,27 +11,22 @@ class coref {
     public:
         coref(T *address, int id, int sz[NumDims]):node_id(id), data(address) {
             std::copy(sz, sz + NumDims, &size[0]);
-            total_size = 1;
+            total_size = size[0];
             slice_size = 1;
-            for(int i = 0; i < NumDims; i++) {
+            for(int i = 1; i < NumDims; i++) {
                 total_size *= size[i];
-                if(i > 0) {
-                    slice_size *= size[i];
-                }
+                slice_size *= size[i];
             }
         }
-        coref(T *addr, int id, std::array<int,NumDims> sz): coref(addr, id, sz.data()) {}
         coref<T,NumDims-1> operator[](int i){ 
             return coref<T,NumDims-1>(data + i*slice_size, node_id, &size[1]);
         }
         coref<T,NumDims> operator=(coref<T,NumDims> other){
             assert(total_size == other.total_size);
-            
             if((node_id == image_num) && (other.node_id == image_num)) {
                 std::copy(other.data, other.data + other.size, data);
                 return *this;
             }
-
             T *tmp_data = data;
             if( other.node_id != image_num ) {//rhs is remote
                 if( node_id != image_num ) {//both sides are remote
@@ -46,21 +41,26 @@ class coref {
                 delete[] tmp_data;
             return *this;
         }
+        //Range for loop functions:
         coref<T, NumDims-1> begin() {
             return coref<T,NumDims-1>(data, node_id, &size[1]);
         }
         coref<T, NumDims-1> end() { 
             return coref<T,NumDims-1>(data + (size[0]-1)*slice_size, node_id, &size[1]);
         }
+        //Iterator functions:
         bool operator!=(const coref<T,NumDims> other) const {
             return !( (data == other.data) && (node_id == other.node_id) );
         }
         const coref<T,NumDims> operator++() {
-            data += slice_size;
+            data += total_size;
             return *this;
         }
-        coref<T,1> operator*() {
+        coref<T,NumDims> operator*() {
             return *this;
+        }
+        T* get_data(){
+            return data;
         }
     private:
         T *data;
@@ -74,22 +74,19 @@ class coref {
 template<typename T>
 class coref <T,1> {
     public:
-        coref(T *addr, int id, int sz):node_id(id), data(addr), total_size(sz){}
-        coref(T *addr, int id, int sz[1]):node_id(id), data(addr), total_size(sz[0]){}
-
-        coref(T *addr, int id, std::array<int,1> sz):node_id(id), data(addr), total_size(sz[0]){}
-
-        coref<T,0> operator[](int i){ 
+        coref(T *addr, int id, int sz):node_id(id), data(addr), total_size(sz) {
+        }
+        coref(T *addr, int id, int sz[1]):node_id(id), data(addr), total_size(sz[0]) {
+        }
+        coref<T,0> operator[](int i) {
             return coref<T,0>(data + i, node_id);
         }
         coref<T,1> operator=(coref<T,1> other){
             assert(total_size == other.total_size);
-            
             if((node_id == image_num) && (other.node_id == image_num)) {
                 std::copy(other.data, other.data + other.total_size, data);
                 return *this;
             }
-
             T *tmp_data = data;
             if( other.node_id != image_num ) {//rhs is remote
                 if( node_id != image_num ) {//both sides are remote
@@ -104,25 +101,14 @@ class coref <T,1> {
                 delete[] tmp_data;
             return *this;
         }
-
-        coref<T,1>& operator=(T* const other){
-            assert(false);
-            if( node_id != image_num ) {
-            }
-            std::copy(other, other + total_size, data);
-            return *this;
-        }
-        coref<T,1>& operator=(std::array<T,1> other){
-            assert(other.size() == total_size);
-            std::copy(other.begin(), other.end(), data);
-            return *this;
-        }
+        //Range for loop functions:
         T* begin() {
             return &data[0];
         }
         T* end() {
             return &data[total_size-1];
         }
+        //Iterator functions:
         bool operator!=(const coref<T,1> other) const {
             return !( (data == other.data) && (node_id == other.node_id) );
         }
@@ -132,6 +118,9 @@ class coref <T,1> {
         }
         coref<T,1> operator*() {
             return *this;
+        }
+        T* get_data(){
+            return data;
         }
     private:
         T *data;

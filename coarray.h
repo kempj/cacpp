@@ -55,7 +55,7 @@ class coarray {
             codims = codim;
         }
         coarray(const int dim[NumDims], const int codim[NumDims]) : coarray(dim){
-            codims = codim
+            codims = codim;
         }
         coarray(dims size) : coarray(size.D.data()) {
         }
@@ -117,6 +117,9 @@ class coarray {
         }
         coref<T, NumDims-1> end() { 
             return data->end();
+        }
+        T* get_data(){
+            return data->get_data();
         }
     private:
         std::vector<int> codims;

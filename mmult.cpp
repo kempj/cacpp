@@ -30,7 +30,9 @@ void comult2D( coarray<int, 2> A, int e1[2],
         for(int col = 0; col < width; col++) {
             C[row][col] = 0;
             for(int inner = 0; inner < e1[1]; inner++) {
-                C[row][col] = C[row][col] + A[row][inner] * B(inner%tot)[inner][col];
+                coref<int, 1> tmp = B(inner%tot)[inner];
+                C[row][col] = C[row][col] + A[row][inner] * tmp[col];
+                //C[row][col] = C[row][col] + A[row][inner] * B(inner%tot)[inner][col];
                 //C[row][col] = C[row][col] + A[row][inner] * B[inner][col];
             }
         }
