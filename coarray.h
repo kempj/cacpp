@@ -77,6 +77,14 @@ class coarray {
             data = remote_data[image_num];
             data_size += (local_size * sizeof(T));
         }
+/*
+        coarray<T,NumDims>& operator+(coarray<T,NumDims> &other) {
+            return (*data) + (*other.data);
+        }
+        coarray<T,NumDims>& operator*(coarray<T,NumDims> &other) {
+            return (*data) * (*other.data);
+        }
+*/
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             //TODO: get this working
             //if they are both on same node (and not same array) 
@@ -106,19 +114,21 @@ class coarray {
             }
             return *(remote_data[current_index]);
         }
-        coref<T,NumDims-1> operator[](int i){ 
+//        coref<T,NumDims-1> operator[](int i){ 
+//            return (*data)[i];
+//        }
+        const coref<T,NumDims-1> operator[](int i) const { 
             return (*data)[i];
         }
-        const coref<T,NumDims-1>& operator[](int i) const { 
-            return (*data)[i];
-        }
-        coref<T, NumDims-1> begin() {
+        //TODO: this should return T if Numdims = 1. This probably means a template specialization
+        //is needed
+        coref<T, NumDims-1> begin() const {
             return data->begin();
         }
-        coref<T, NumDims-1> end() { 
+        coref<T, NumDims-1> end() const { 
             return data->end();
         }
-        T* get_data(){
+        T* get_data() const {
             return data->get_data();
         }
     private:

@@ -59,7 +59,7 @@ class coref {
         coref<T,NumDims> operator*() {
             return *this;
         }
-        T* get_data(){
+        T* get_data() const {
             return data;
         }
     private:
@@ -78,7 +78,14 @@ class coref <T,1> {
         }
         coref(T *addr, int id, int sz[1]):node_id(id), data(addr), total_size(sz[0]) {
         }
-        coref<T,0> operator[](int i) {
+/*
+        coref<T, 1>& operator+(coref<T, 1> &other) {
+            //where do I write data? Might be easier to start with +=
+        }
+        coref<T,1>& operator*(coref<T, 1> &other) {
+        }
+*/
+        const coref<T,0> operator[](int i) const {
             return coref<T,0>(data + i, node_id);
         }
         coref<T,1> operator=(coref<T,1> other){
@@ -102,10 +109,10 @@ class coref <T,1> {
             return *this;
         }
         //Range for loop functions:
-        T* begin() {
+        T* begin() const {
             return &data[0];
         }
-        T* end() {
+        T* end() const {
             return &data[total_size-1];
         }
         //Iterator functions:
@@ -116,10 +123,10 @@ class coref <T,1> {
             data += total_size;
             return *this;
         }
-        coref<T,1> operator*() {
+        coref<T,1> operator*() const {
             return *this;
         }
-        T* get_data(){
+        T* get_data() const {
             return data;
         }
     private:
@@ -137,11 +144,11 @@ class coref<T,0> {
             node_id = id;
         }
         //TODO: define other operators, like += and >>
-        coref<T,0>& operator=(coref<T,0> & other){
+        const coref<T,0>& operator=(coref<T,0> const& other) const {
             this->data = T(other);
             return *this;
         }
-        operator T() {
+        operator T() const {
             T tmp;
             if(node_id != image_num){
                 gasnet_get(&tmp, node_id, data, sizeof(T));
@@ -149,7 +156,7 @@ class coref<T,0> {
             }
             return *data;
         }
-        coref<T,0>& operator=(T const& other){
+        const coref<T,0>& operator=(T const& other) const {
             T tmp = other;
             if(image_num != node_id) {
                 gasnet_put(node_id, data, &tmp, sizeof(T));
