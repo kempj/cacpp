@@ -182,8 +182,7 @@ void test3() {
 
     int id = this_image();
     int team_size = num_images();
-    std::array<int,2> extents = {4,4};
-    //std::array<int,2> codims = {2, 2};
+    int extents[] = {4,4};
     coarray<int,2> A(dims{4,4}, codims{2,2});
     coarray<int,2> B(dims{4,4}, codims{2,2});
     for(int i = 0; i < extents[1]; i++) {

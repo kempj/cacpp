@@ -1,5 +1,4 @@
 #include <iostream>
-#include <array>
 #include <cstdarg>
 #include <cassert>
 
@@ -12,7 +11,6 @@
 
 using std::cout;
 using std::endl;
-using std::array;
 
 gasnet_seginfo_t *segment_info;
 int image_num=-1;
@@ -30,6 +28,10 @@ void sync_all() {
     int status = gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
     if(GASNET_OK != status)
         cout << "error while syncing all" << endl;
+}
+
+void sync_images() {
+    //TODO
 }
 
 void remote_init(){
@@ -51,15 +53,10 @@ class coarray {
             codims = cosize.D;
             //assert codim1 * codim2 *... = num_images
         }
-        coarray(array<int,NumDims> const & dim, array<int,NumDims> const & codim) : coarray(dim.data()) {
-            codims = codim;
-        }
         coarray(const int dim[NumDims], const int codim[NumDims]) : coarray(dim){
             codims = codim;
         }
         coarray(dims size) : coarray(size.D.data()) {
-        }
-        coarray(array<int,NumDims> const & size) : coarray(size.data()) {
         }
         coarray(const int size[NumDims]){
             if(codims.size() == 0)

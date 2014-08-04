@@ -1,4 +1,3 @@
-#include <array>
 #include <cassert>
 
 #define GASNET_PAR 1
