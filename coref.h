@@ -78,17 +78,15 @@ class coref <T,1> {
         }
         coref(T *addr, int id, int sz[1]):node_id(id), data(addr), total_size(sz[0]) {
         }
-/*
-        coref<T, 1>& operator+(coref<T, 1> &other) {
+        /*coref<T, 1>& operator+(coref<T, 1> &other) {
             //where do I write data? Might be easier to start with +=
         }
         coref<T,1>& operator*(coref<T, 1> &other) {
-        }
-*/
-        const coref<T,0> operator[](int i) const {
+        }*/
+        const coref<T,0> operator[](const int i) const {
             return coref<T,0>(data + i, node_id);
         }
-        coref<T,1> operator=(coref<T,1> other){
+        coref<T,1> operator=(const coref<T,1> other){
             assert(total_size == other.total_size);
             if((node_id == image_num) && (other.node_id == image_num)) {
                 std::copy(other.data, other.data + other.total_size, data);
@@ -144,8 +142,8 @@ class coref<T,0> {
             node_id = id;
         }
         //TODO: define other operators, like += and >>
-        const coref<T,0>& operator=(coref<T,0> const& other) const {
-            this->data = T(other);
+        const coref<T,0>& operator=(const coref<T,0> &other) {
+            *data = T(other);
             return *this;
         }
         operator T() const {
@@ -156,7 +154,7 @@ class coref<T,0> {
             }
             return *data;
         }
-        const coref<T,0>& operator=(T const& other) const {
+        const coref<T,0>& operator=(const T &other) const {
             T tmp = other;
             if(image_num != node_id) {
                 gasnet_put(node_id, data, &tmp, sizeof(T));

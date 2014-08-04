@@ -117,7 +117,7 @@ class coarray {
 //        coref<T,NumDims-1> operator[](int i){ 
 //            return (*data)[i];
 //        }
-        const coref<T,NumDims-1> operator[](int i) const { 
+        coref<T,NumDims-1> operator[](int i) const { 
             return (*data)[i];
         }
         //TODO: this should return T if Numdims = 1. This probably means a template specialization
