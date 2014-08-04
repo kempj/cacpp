@@ -242,14 +242,7 @@ void test3() {
         C[i].print();
     }*/
 }
-
-int main(int argc, char **argv) 
-{
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
-
-    int id = this_image();
-    int team_size = num_images();
+void test4() {
     coarray<int,2> A(dims{4,4}, codims{1,2});
     coarray<int,2> B(dims{4,4}, codims{1,2});
     
@@ -296,7 +289,19 @@ int main(int argc, char **argv)
         }
     }
 
+}
+
+int main(int argc, char **argv) 
+{
+    GASNET_SAFE(gasnet_init(&argc, &argv));
+    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
+
+    int id = this_image();
+    int team_size = num_images();
+
     sync_all();
+
+    coarray<int,2> A(dims{4,4}, codims{1,2});
     
     if(this_image() == 0)
         cout << endl << "test1" << endl;
