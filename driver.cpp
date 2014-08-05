@@ -301,6 +301,9 @@ int main(int argc, char **argv)
     sync_all();
 
     coarray<int,2> A(dims{4,4}, codims{1,2});
+
+    int *b;
+    b = A(0);
     
     if(this_image() == 0)
         cout << endl << "test1" << endl;

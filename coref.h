@@ -29,7 +29,7 @@ class coref {
             T *tmp_data = data;
             if( other.node_id != image_num ) {//rhs is remote
                 if( node_id != image_num ) {//both sides are remote
-                    tmp_data = new T[size];
+                    tmp_data = new T[size]; //TODO: this probably needs to be removed.
                 }
                 gasnet_get_bulk(tmp_data, other.node_id, other.data, total_size * sizeof(T));
             }
@@ -58,8 +58,16 @@ class coref {
         coref<T,NumDims> operator*() {
             return *this;
         }
+        operator T*() {
+            if(node_id == image_num) {
+                return data;
+            }
+        }
         T* get_data() const {
-            return data;
+            if( node_id == image_num) {
+                return data;
+            }//else do remote get. How do I do this without more dynamic allocations?
+            return NULL;
         }
     private:
         T *data;
@@ -94,7 +102,7 @@ class coref <T,1> {
             T *tmp_data = data;
             if( other.node_id != image_num ) {//rhs is remote
                 if( node_id != image_num ) {//both sides are remote
-                    tmp_data = new T[total_size];
+                    tmp_data = new T[total_size];//TODO: this probably needs to be removed. Who deallocates it?
                 }
                 gasnet_get_bulk(tmp_data, other.node_id, other.data, total_size * sizeof(T));
             }
@@ -123,8 +131,16 @@ class coref <T,1> {
         coref<T,1> operator*() const {
             return *this;
         }
+        operator T*() {
+            if( node_id == image_num) {
+                return data;
+            }
+        }
         T* get_data() const {
-            return data;
+            if( node_id == image_num) {
+                return data;
+            }
+            return NULL;
         }
     private:
         T *data;
