@@ -292,19 +292,22 @@ void test4() {
 
 int main(int argc, char **argv) 
 {
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
 
     int id = this_image();
     int team_size = num_images();
+
+    init_runtime(argc,argv);
 
     sync_all();
 
     coarray<int,2> A(dims{4,4}, codims{1,2});
 
+    cout << "GASNET_PAGESIZE = " << GASNET_PAGESIZE << endl;
+    cout << "Max local segment size: " << gasnet_getMaxLocalSegmentSize() << endl;
+    cout << "current segment size = " << size_local_shared_memory() << endl;
     int *b;
     b = A(0);
-    
+   /* 
     if(this_image() == 0)
         cout << endl << "test1" << endl;
     test1();
@@ -320,6 +323,7 @@ int main(int argc, char **argv)
     if(this_image() == 0)
         cout << endl << "test3" << endl;
     test3();
+    */
 
     sync_all();
 

@@ -12,6 +12,20 @@
 using std::cout;
 using std::endl;
 
+#define GASNET_SAFE(fncall) do {                                    \
+    int _retval;                                                    \
+    if ((_retval = fncall) != GASNET_OK)                            \
+    {                                                               \
+        fprintf(stderr, "ERROR calling: %s\n"                       \
+                        " at: %s:%i\n"                              \
+                        " error: %s (%s)\n",                        \
+                        #fncall, __FILE__, __LINE__,                \
+              gasnet_ErrorName(_retval), gasnet_ErrorDesc(_retval));\
+        fflush(stderr);                                             \
+        gasnet_exit(_retval);                                       \
+    }                                                               \
+} while(0)
+
 gasnet_seginfo_t *segment_info;
 int image_num=-1;
 int64_t data_size=0;//Needed globally to keep track of the beginning of each new coarray
@@ -46,6 +60,21 @@ void remote_init(){
     }
 }
 
+void init_runtime(int argc, char **argv, double seg_ratio = .1) {
+    GASNET_SAFE(gasnet_init(&argc, &argv));
+
+    int seg_size = (seg_ratio * (gasnet_getMaxLocalSegmentSize()/GASNET_PAGESIZE));
+    seg_size *= GASNET_PAGESIZE;
+    GASNET_SAFE(gasnet_attach(NULL, 0, seg_size, GASNET_PAGESIZE));
+    remote_init();
+
+}
+
+size_t size_local_shared_memory() {
+    return segment_info[image_num].size;
+}
+
+
 template<typename T, int NumDims>
 class coarray {
     public:
@@ -66,7 +95,6 @@ class coarray {
                 local_size*= size[i];
                 extents[i] = size[i];
             }
-            remote_init();
             remote_data = new coref<T,NumDims>*[num_images()];
             for(int i = 0; i < num_images(); i++) {
                 remote_data[i] = new coref<T,NumDims>(((T*)segment_info[i].addr + data_size), i, extents);
@@ -122,18 +150,4 @@ class coarray {
         coref<T,NumDims> **remote_data;
 };
 
-/* Macro to check return codes and terminate with useful message. */
-#define GASNET_SAFE(fncall) do {                                    \
-    int _retval;                                                    \
-    if ((_retval = fncall) != GASNET_OK)                            \
-    {                                                               \
-        fprintf(stderr, "ERROR calling: %s\n"                       \
-                        " at: %s:%i\n"                              \
-                        " error: %s (%s)\n",                        \
-                        #fncall, __FILE__, __LINE__,                \
-              gasnet_ErrorName(_retval), gasnet_ErrorDesc(_retval));\
-        fflush(stderr);                                             \
-        gasnet_exit(_retval);                                       \
-    }                                                               \
-} while(0)
 
