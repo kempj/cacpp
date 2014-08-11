@@ -307,6 +307,16 @@ int main(int argc, char **argv)
     cout << "current segment size = " << size_local_shared_memory() << endl;
     int *b;
     b = A(0);
+
+    A(0)[0][0] = 42;
+
+    for(int i =0; i < num_images(); i++) {
+        sync_all();
+        if(this_image() == i) {
+            cout << "From image " << i << ", A(0)[0][0] = " << A(0)[0][0] << endl;
+        }
+    }
+
    /* 
     if(this_image() == 0)
         cout << endl << "test1" << endl;
