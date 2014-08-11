@@ -278,16 +278,7 @@ void test4() {
             }
             cout << A[i][3] << endl;
         }
-
-        //for(int i = 0; i < 4; i++) {
-        for(auto row : A) {
-            for(auto entry : row) {
-                cout << entry << ", ";
-            }
-            cout << row[3] << endl;
-        }
     }
-
 }
 
 int main(int argc, char **argv) 

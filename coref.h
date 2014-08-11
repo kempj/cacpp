@@ -40,28 +40,16 @@ class coref {
                 delete[] tmp_data;
             return *this;
         }
-        //Range for loop functions:
-        coref<T, NumDims-1> begin() {
-            return coref<T,NumDims-1>(data, node_id, &size[1]);
-        }
-        coref<T, NumDims-1> end() { 
-            return coref<T,NumDims-1>(data + (size[0]-1)*slice_size, node_id, &size[1]);
-        }
-        //Iterator functions:
-        bool operator!=(const coref<T,NumDims> other) const {
-            return !( (data == other.data) && (node_id == other.node_id) );
-        }
-        const coref<T,NumDims> operator++() {
-            data += total_size;
-            return *this;
-        }
-        coref<T,NumDims> operator*() {
-            return *this;
-        }
         operator T*() {
             if(node_id == image_num) {
                 return data;
             }
+            //TODO
+            //else {
+            //    T* tmp = new T[total_size];
+            //    //get remote data (needs to be blocking)
+            //    return tmp;
+            //}
         }
         T* get_data() const {
             if( node_id == image_num) {
@@ -85,16 +73,11 @@ class coref <T,1> {
         }
         coref(T *addr, int id, int sz[1]):node_id(id), data(addr), total_size(sz[0]) {
         }
-        /*coref<T, 1>& operator+(coref<T, 1> &other) {
-            //where do I write data? Might be easier to start with +=
-        }
-        coref<T,1>& operator*(coref<T, 1> &other) {
-        }*/
         const coref<T,0> operator[](const int i) const {
             return coref<T,0>(data + i, node_id);
         }
         coref<T,1> operator=(const coref<T,1> other){
-            assert(total_size == other.total_size);
+            assert(total_size == other.total_size);//Throw exception
             if((node_id == image_num) && (other.node_id == image_num)) {
                 std::copy(other.data, other.data + other.total_size, data);
                 return *this;
@@ -113,28 +96,16 @@ class coref <T,1> {
                 delete[] tmp_data;
             return *this;
         }
-        //Range for loop functions:
-        T* begin() const {
-            return &data[0];
-        }
-        T* end() const {
-            return &data[total_size-1];
-        }
-        //Iterator functions:
-        bool operator!=(const coref<T,1> other) const {
-            return !( (data == other.data) && (node_id == other.node_id) );
-        }
-        const coref<T,1> operator++() {
-            data += total_size;
-            return *this;
-        }
-        coref<T,1> operator*() const {
-            return *this;
-        }
         operator T*() {
             if( node_id == image_num) {
                 return data;
             }
+            //TODO
+            //else {
+            //    T* tmp = new T[total_size];
+            //    //get remote data
+            //    return tmp;
+            //}
         }
         T* get_data() const {
             if( node_id == image_num) {

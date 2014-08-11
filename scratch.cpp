@@ -1,3 +1,41 @@
+
+        //Range for loop functions:
+        coref<T, NumDims-1> begin() {
+            return coref<T,NumDims-1>(data, node_id, &size[1]);
+        }
+        coref<T, NumDims-1> end() { 
+            return coref<T,NumDims-1>(data + (size[0]-1)*slice_size, node_id, &size[1]);
+        }
+        //Iterator functions:
+        bool operator!=(const coref<T,NumDims> other) const {
+            return !( (data == other.data) && (node_id == other.node_id) );
+        }
+        const coref<T,NumDims> operator++() {
+            data += total_size;
+            return *this;
+        }
+        coref<T,NumDims> operator*() {
+            return *this;
+        }
+        //Range for loop functions:
+        T* begin() const {
+            return &data[0];
+        }
+        T* end() const {
+            return &data[total_size-1];
+        }
+        //Iterator functions:
+        bool operator!=(const coref<T,1> other) const {
+            return !( (data == other.data) && (node_id == other.node_id) );
+        }
+        const coref<T,1> operator++() {
+            data += total_size;
+            return *this;
+        }
+        coref<T,1> operator*() const {
+            return *this;
+        }
+
 //This isn't needed, at least not yet:
             /*
         coref<T,1>& operator=(T* const other){

@@ -134,12 +134,6 @@ class coarray {
         coref<T,NumDims-1> operator[](int i) const { 
             return (*data)[i];
         }
-        coref<T, NumDims-1> begin() const {
-            return data->begin();
-        }
-        coref<T, NumDims-1> end() const { 
-            return data->end();
-        }
         T* get_data() const {
             return data->get_data();
         }
