@@ -85,11 +85,12 @@ class coref <T,1> {
             T *tmp_data = data;
             if( other.node_id != image_num ) {//rhs is remote
                 if( node_id != image_num ) {//both sides are remote
-                    tmp_data = new T[total_size];//TODO: this probably needs to be removed. Who deallocates it?
+                    tmp_data = new T[total_size];
                 }
                 gasnet_get_bulk(tmp_data, other.node_id, other.data, total_size * sizeof(T));
             }
             if( node_id != image_num ) {//lhs is remote
+                //TODO:make nonblocking.
                 gasnet_put_bulk(node_id, data, tmp_data, total_size*sizeof(T));
             }
             if( tmp_data != data)

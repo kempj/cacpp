@@ -42,6 +42,7 @@ void sync_all() {
     int status = gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
     if(GASNET_OK != status)
         cout << "error while syncing all" << endl;
+    //TODO:make sure all pending push/writes are done.
 }
 
 void sync_images() {
