@@ -285,7 +285,6 @@ void test5() {
     coarray<int,2> A(dims{4,4}, codims{1,2});
     cout << "GASNET_PAGESIZE = " << GASNET_PAGESIZE << endl;
     cout << "Max local segment size: " << gasnet_getMaxLocalSegmentSize() << endl;
-    cout << "current segment size = " << size_local_shared_memory() << endl;
     int *b;
     b = A(0);
 

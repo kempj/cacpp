@@ -29,7 +29,7 @@ using std::endl;
 } while(0)
 
 gasnet_seginfo_t *segment_info;
-int image_num=-1;
+int image_num = -1;
 int64_t data_size=0;//Needed globally to keep track of the beginning of each new coarray
 atomic<int> num_waiting_images {0};
 
@@ -37,7 +37,6 @@ atomic<int> num_waiting_images {0};
 void increment_num_waiting_images(gasnet_token_t token, int inc_value) {
     num_waiting_images += inc_value;
 }
-
 
 static gasnet_handlerentry_t handlers[] = {
     {128, (void(*)())increment_num_waiting_images}
@@ -88,10 +87,6 @@ void init_runtime(int argc, char **argv, double seg_ratio = .1) {
 
 }
 
-size_t size_local_shared_memory() {
-    return segment_info[image_num].size;
-}
-
 
 template<typename T, int NumDims>
 class coarray {
@@ -124,6 +119,7 @@ class coarray {
             //TODO: get this working
             //if they are both on same node (and not same array) 
             // then just swap pointers.
+            // I don't think that will work; existing references to data will not be updated
             //Same array, different nodes?
         }
         coref<T,NumDims>& operator()(){
@@ -149,6 +145,7 @@ class coarray {
             }
             return *(remote_data[current_index]);
         }
+        //TODO: inline all the [] calls
         coref<T,NumDims-1> operator[](int i) const { 
             return (*data)[i];
         }
