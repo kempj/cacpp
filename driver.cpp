@@ -281,18 +281,8 @@ void test4() {
     }
 }
 
-int main(int argc, char **argv) 
-{
-
-    int id = this_image();
-    int team_size = num_images();
-
-    init_runtime(argc,argv);
-
-    sync_all();
-
+void test5() {
     coarray<int,2> A(dims{4,4}, codims{1,2});
-
     cout << "GASNET_PAGESIZE = " << GASNET_PAGESIZE << endl;
     cout << "Max local segment size: " << gasnet_getMaxLocalSegmentSize() << endl;
     cout << "current segment size = " << size_local_shared_memory() << endl;
@@ -307,24 +297,37 @@ int main(int argc, char **argv)
             cout << "From image " << i << ", A(0)[0][0] = " << A(0)[0][0] << endl;
         }
     }
+}
 
-   /* 
-    if(this_image() == 0)
-        cout << endl << "test1" << endl;
-    test1();
+int main(int argc, char **argv) 
+{
+
+    int id = this_image();
+    int team_size = num_images();
+
+    init_runtime(argc,argv);
 
     sync_all();
+
+    coarray<int,2> A(dims{4,4}, codims{1,2});
+    int *image_list = new int[num_images()-1];
+
+    int j = 0;
+    for(int i = 0; i < num_images(); i++) {
+        if(i != this_image()) {
+            image_list[j] = i;
+            j++;
+        }
+    }
+
+    A[0][0] = 42 + this_image();
+    sync_images(image_list, num_images() - 1);
     
-    if(this_image() == 0)
-        cout << endl << "test2" << endl;
-    test2();
-
-    sync_all();
-
-    if(this_image() == 0)
-        cout << endl << "test3" << endl;
-    test3();
-    */
+    if(this_image() == 0) {
+        for(int i = 0; i < num_images(); i++) {
+            cout << "A(" << i << ")[0][0] = " << A(i)[0][0] << endl;
+        }
+    }
 
     sync_all();
 

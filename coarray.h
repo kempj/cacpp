@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdarg>
 #include <cassert>
+#include <atomic>
 
 #include "coref.h"
 #include "dims.h"
@@ -9,6 +10,7 @@
 #define GASNET_PAR 1
 #include "gasnet.h"
 
+using std::atomic;
 using std::cout;
 using std::endl;
 
@@ -29,7 +31,19 @@ using std::endl;
 gasnet_seginfo_t *segment_info;
 int image_num=-1;
 int64_t data_size=0;//Needed globally to keep track of the beginning of each new coarray
+atomic<int> num_waiting_images {0};
 
+
+void increment_num_waiting_images(gasnet_token_t token, int inc_value) {
+    num_waiting_images += inc_value;
+}
+
+
+static gasnet_handlerentry_t handlers[] = {
+    {128, (void(*)())increment_num_waiting_images}
+};
+
+//-----------------------------------------------------
 int this_image(){
     return gasnet_mynode();;
 }
@@ -42,11 +56,14 @@ void sync_all() {
     int status = gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
     if(GASNET_OK != status)
         cout << "error while syncing all" << endl;
-    //TODO:make sure all pending push/writes are done.
 }
 
-void sync_images() {
-    //TODO
+void sync_images(int *image_list, size_t size) {
+    num_waiting_images += size;
+    for(int i = 0; i < size; i++) {
+        gasnet_AMRequestShort1(image_list[i], 128, -1);
+    }
+    GASNET_BLOCKUNTIL(num_waiting_images == 0);
 }
 
 void remote_init(){
@@ -66,7 +83,7 @@ void init_runtime(int argc, char **argv, double seg_ratio = .1) {
 
     int seg_size = (seg_ratio * (gasnet_getMaxLocalSegmentSize()/GASNET_PAGESIZE));
     seg_size *= GASNET_PAGESIZE;
-    GASNET_SAFE(gasnet_attach(NULL, 0, seg_size, GASNET_PAGESIZE));
+    GASNET_SAFE(gasnet_attach(handlers, 1, seg_size, GASNET_PAGESIZE));
     remote_init();
 
 }
@@ -134,9 +151,6 @@ class coarray {
         }
         coref<T,NumDims-1> operator[](int i) const { 
             return (*data)[i];
-        }
-        T* get_data() const {
-            return data->get_data();
         }
     private:
         std::vector<int> codims;

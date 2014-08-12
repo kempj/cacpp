@@ -43,6 +43,8 @@ class coref {
         operator T*() {
             if(node_id == image_num) {
                 return data;
+            } else {
+                return NULL;
             }
             //TODO
             //else {
@@ -50,12 +52,6 @@ class coref {
             //    //get remote data (needs to be blocking)
             //    return tmp;
             //}
-        }
-        T* get_data() const {
-            if( node_id == image_num) {
-                return data;
-            }//else do remote get. How do I do this without more dynamic allocations?
-            return NULL;
         }
     private:
         T *data;
@@ -86,7 +82,7 @@ class coref <T,1> {
             if( other.node_id != image_num ) {//rhs is remote
                 if( node_id != image_num ) {//both sides are remote
                     tmp_data = new T[total_size];
-                }
+                }//Could be replaced by a remote procedure to prevent the extra copy
                 gasnet_get_bulk(tmp_data, other.node_id, other.data, total_size * sizeof(T));
             }
             if( node_id != image_num ) {//lhs is remote
@@ -100,6 +96,8 @@ class coref <T,1> {
         operator T*() {
             if( node_id == image_num) {
                 return data;
+            } else {
+                return NULL;
             }
             //TODO
             //else {
@@ -107,12 +105,6 @@ class coref <T,1> {
             //    //get remote data
             //    return tmp;
             //}
-        }
-        T* get_data() const {
-            if( node_id == image_num) {
-                return data;
-            }
-            return NULL;
         }
     private:
         T *data;
