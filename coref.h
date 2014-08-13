@@ -46,12 +46,6 @@ class coref {
             } else {
                 return NULL;
             }
-            //TODO
-            //else {
-            //    T* tmp = new T[total_size];
-            //    //get remote data (needs to be blocking)
-            //    return tmp;
-            //}
         }
     private:
         T *data;
@@ -99,12 +93,6 @@ class coref <T,1> {
             } else {
                 return NULL;
             }
-            //TODO
-            //else {
-            //    T* tmp = new T[total_size];
-            //    //get remote data
-            //    return tmp;
-            //}
         }
     private:
         T *data;
