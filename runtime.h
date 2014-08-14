@@ -4,9 +4,22 @@
 using std::vector;
 
 struct descriptor {
-    vector<uint64_t> extents;
+    descriptor( vector<int> D, vector<int> C, uint64_t delta) :
+                   extents(D),     codims(C),   offset(delta) {
+        for(int i = 0; i < extents.size() - 1; i++) {
+            stride_multiplier.push_back(extents[extents.size()-1]);
+        }
+        stride_multiplier.push_back(1);
+        for(int i = extents.size()-2; i > 0; i--) {
+            stride_multiplier[i] = extents[i+1] * stride_multiplier[i+1];
+        }
+        size = extents[0] * stride_multiplier[0];
+    }
+    vector<int> extents;
     vector<uint64_t> stride_multiplier;
     uint64_t size;
+    uint64_t offset;
+    vector<int> codims;
 }
 
 class coarray_runtime {
@@ -22,14 +35,16 @@ class coarray_runtime {
         int get_num_images() {
             return num_images;
         }
+        int coarray_setup(vector<uint64_t> dims, vector<uint64_t> codims) {
+            data_size += descriptor.size;
+            coarray_descriptors.push_back(new_descriptor);
+        }
         ~coarray_runtime() {
             gasnet_exit();
             delete[] segment_info;
         }
     private:
-        vector<int> codims;
-        void vector<descriptor>;
-        //codimensions?
+        void vector<descriptor> coarray_descriptors;
         gasnet_seginfo_t *segment_info;
         int image_num = -1;
         int num_images = -1;

@@ -40,29 +40,12 @@ void sync_images(int *image_list, size_t size) {
 template<typename T, int NumDims>
 class coarray {
     public:
-        coarray(dims size, codims cosize) : coarray(size.D.data()) {
-            codims = cosize.D;
-            //assert codim1 * codim2 *... = num_images
-        }
-        coarray(const int dim[NumDims], const int codim[NumDims]) : coarray(dim){
-            codims = codim;
-        }
-        coarray(dims size) : coarray(size.D.data()) {
-        }
-        coarray(const int size[NumDims]){
-            if(codims.size() == 0)
-                codims.push_back(1);
-            int local_size=1;
-            for(int i=0; i < NumDims; i++){
-                local_size*= size[i];
-                extents[i] = size[i];
-            }
-            remote_data = new coref<T,NumDims>*[num_images()];
-            for(int i = 0; i < num_images(); i++) {
-                remote_data[i] = new coref<T,NumDims>(((T*)segment_info[i].addr + data_size), i, extents);
-            }
-            data = remote_data[image_num];
-            data_size += (local_size * sizeof(T));
+        coarray(int *D, int cosize, int *C) : coarray(   dims(D,NumDims), 
+                                                       codims(C, cosize) ) {}
+        coarray(dims size, codims cosize) {
+            //throw if not codim1 * codim2 *... = num_images
+            rt_id = rt.coarray_setup(dims.D, codims.D);
+            node_id = RT.get_image_id();
         }
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             //TODO: get this working
@@ -73,6 +56,7 @@ class coarray {
         coref<T,NumDims>& operator()(int id){
             return *(remote_data[id]);
         }
+        /*
         coref<T,NumDims>& operator()(int first, int second, ...){
             va_list args;
             va_start(args, second);
@@ -90,12 +74,14 @@ class coarray {
             }
             return *(remote_data[current_index]);
         }
+        */
         coref<T,NumDims-1> operator[](int i) const { 
             return (*data)[i];
         }
     private:
         uint64_t rt_id;
         std::vector<uint64_t> start_coords;
+        int node_id;
 };
 
 
