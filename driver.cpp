@@ -330,7 +330,6 @@ int main(int argc, char **argv)
 
     sync_all();
 
-    gasnet_exit(0);
 
     return 1;
 }

@@ -3,51 +3,22 @@
 #include <cassert>
 #include <atomic>
 
+#include "runtime.h"
 #include "coref.h"
 #include "dims.h"
 #include "codims.h"
-
-#define GASNET_PAR 1
-#include "gasnet.h"
 
 using std::atomic;
 using std::cout;
 using std::endl;
 
-#define GASNET_SAFE(fncall) do {                                    \
-    int _retval;                                                    \
-    if ((_retval = fncall) != GASNET_OK)                            \
-    {                                                               \
-        fprintf(stderr, "ERROR calling: %s\n"                       \
-                        " at: %s:%i\n"                              \
-                        " error: %s (%s)\n",                        \
-                        #fncall, __FILE__, __LINE__,                \
-              gasnet_ErrorName(_retval), gasnet_ErrorDesc(_retval));\
-        fflush(stderr);                                             \
-        gasnet_exit(_retval);                                       \
-    }                                                               \
-} while(0)
+coarray_runtime RT;//do I need to call () here?
 
-gasnet_seginfo_t *segment_info;
-int image_num = -1;
-int64_t data_size=0;//Needed globally to keep track of the beginning of each new coarray
-atomic<int> num_waiting_images {0};
-
-
-void increment_num_waiting_images(gasnet_token_t token, int inc_value) {
-    num_waiting_images += inc_value;
-}
-
-static gasnet_handlerentry_t handlers[] = {
-    {128, (void(*)())increment_num_waiting_images}
-};
-
-//-----------------------------------------------------
 int this_image(){
-    return gasnet_mynode();;
+    return RT.get_image_id();
 }
 int num_images(){
-    return gasnet_nodes();
+    return RT.get_num_images()
 }
 
 void sync_all() {
@@ -63,28 +34,6 @@ void sync_images(int *image_list, size_t size) {
         gasnet_AMRequestShort1(image_list[i], 128, -1);
     }
     GASNET_BLOCKUNTIL(num_waiting_images == 0);
-}
-
-void remote_init(){
-    if(image_num < 0) {
-        image_num = this_image();
-    }
-    if(!segment_info) {
-        segment_info =  new gasnet_seginfo_t[num_images()];
-        int status = gasnet_getSegmentInfo(segment_info, num_images());
-        if( GASNET_OK != status)
-            cout << "failed to get segment info" << endl;
-    }
-}
-
-void init_runtime(int argc, char **argv, double seg_ratio = .1) {
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-
-    int seg_size = (seg_ratio * (gasnet_getMaxLocalSegmentSize()/GASNET_PAGESIZE));
-    seg_size *= GASNET_PAGESIZE;
-    GASNET_SAFE(gasnet_attach(handlers, 1, seg_size, GASNET_PAGESIZE));
-    remote_init();
-
 }
 
 
@@ -117,10 +66,6 @@ class coarray {
         }
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             //TODO: get this working
-            //if they are both on same node (and not same array) 
-            // then just swap pointers.
-            // I don't think that will work; existing references to data will not be updated
-            //Same array, different nodes?
         }
         coref<T,NumDims>& operator()(){
             return *(remote_data[image_num]);
@@ -145,15 +90,12 @@ class coarray {
             }
             return *(remote_data[current_index]);
         }
-        //TODO: inline all the [] calls
         coref<T,NumDims-1> operator[](int i) const { 
             return (*data)[i];
         }
     private:
-        std::vector<int> codims;
-        int extents[NumDims];
-        coref<T, NumDims> *data;
-        coref<T,NumDims> **remote_data;
+        uint64_t rt_id;
+        std::vector<uint64_t> start_coords;
 };
 
 
