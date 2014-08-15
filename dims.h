@@ -2,7 +2,7 @@
 
 struct dims {
     int size;
-    std::vector<int> D;
+    std::vector<uint64_t> D;
 
     dims(): size(0){ }
     
@@ -12,7 +12,7 @@ struct dims {
         }
     }
 
-    dims(std::initializer_list<int> l): D(l) {
+    dims(std::initializer_list<uint64_t> l): D(l) {
         size = l.size();
     }
 };

@@ -1,10 +1,9 @@
 #include <iostream>
 #include <cstdarg>
 #include <cassert>
-#include <atomic>
 
 #include "runtime.h"
-#include "coref.h"
+//#include "coref.h"
 #include "dims.h"
 #include "codims.h"
 
@@ -18,24 +17,16 @@ int this_image(){
     return RT.get_image_id();
 }
 int num_images(){
-    return RT.get_num_images()
+    return RT.get_num_images();
 }
 
 void sync_all() {
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    int status = gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    if(GASNET_OK != status)
-        cout << "error while syncing all" << endl;
+    RT.barrier();
 }
 
 void sync_images(int *image_list, size_t size) {
-    num_waiting_images += size;
-    for(int i = 0; i < size; i++) {
-        gasnet_AMRequestShort1(image_list[i], 128, -1);
-    }
-    GASNET_BLOCKUNTIL(num_waiting_images == 0);
+    RT.sync_images(image_list, size);
 }
-
 
 template<typename T, int NumDims>
 class coarray {
@@ -43,20 +34,88 @@ class coarray {
         coarray(int *D, int cosize, int *C) : coarray(   dims(D,NumDims), 
                                                        codims(C, cosize) ) {}
         coarray(dims size, codims cosize) {
-            //throw if not codim1 * codim2 *... = num_images
-            rt_id = rt.coarray_setup(dims.D, codims.D);
+            rt_id = RT.coarray_setup(size.D, cosize.D);
             node_id = RT.get_image_id();
         }
+        /*coarray(coarray other) : rt_id(other.rt_id),
+                                            start_coords(other.start_coords),
+                                            node_id(id) {}
+        */
+        coarray(uint64_t parent_id, 
+                std::vector<uint64_t> parent_coords, 
+                int parent_node_id, 
+                uint64_t i) : rt_id(parent_id), 
+                              start_coords(parent_coords),
+                              node_id(parent_node_id) {
+            start_coords.push_back(i);
+        }
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
-            //TODO: get this working
+            return *this;//TODO
         }
-        coref<T,NumDims>& operator()(){
-            return *(remote_data[image_num]);
+        coarray<T,NumDims>& operator()(){
+            return *this;
         }
-        coref<T,NumDims>& operator()(int id){
-            return *(remote_data[id]);
+        coarray<T,NumDims> operator()(int id){
+            coarray<T,NumDims> tmp(*this);
+            tmp.node_id = id;
+            return tmp;
         }
+        coarray<T,NumDims-1> operator[](uint64_t i) { 
+            return coarray<T,NumDims-1>(rt_id, start_coords, node_id, i);
+        }
+    private:
+        coarray();
+        uint64_t rt_id;
+        std::vector<uint64_t> start_coords;
+        int node_id;
+};
+
+template<typename T>
+class coarray<T,0> {
+    public:
+        coarray(uint64_t parent_id, 
+                std::vector<uint64_t> parent_coords, 
+                int parent_node_id, 
+                uint64_t i) : rt_id(parent_id), 
+                              start_coords(parent_coords),
+                              node_id(parent_node_id) {
+            start_coords.push_back(i);
+        }
+        const coarray<T,0>& operator=(const coarray<T,0> &other) {
+            //TODO
+            //*(RT.get_address(start_coords))= T(other);
+            return *this;
+        }
+        operator T() const {
+            //TODO
+            /*T tmp;
+            if(node_id != image_num){
+                gasnet_get(&tmp, node_id, data, sizeof(T));
+                return tmp;
+            }
+            return *data;*/
+            return 1;
+        }
+        const coarray<T,0>& operator=(const T &other) const {
+            //TODO
+            /*
+            T tmp = other;
+            if(image_num != node_id) {
+                gasnet_put(node_id, data, &tmp, sizeof(T));
+            } else {
+                *data = other;
+            }*/
+            return *this;
+        }
+    private:
+        coarray();
+        uint64_t rt_id;
+        std::vector<uint64_t> start_coords;
+        int node_id;
+};
+
         /*
+        //TODO
         coref<T,NumDims>& operator()(int first, int second, ...){
             va_list args;
             va_start(args, second);
@@ -75,13 +134,3 @@ class coarray {
             return *(remote_data[current_index]);
         }
         */
-        coref<T,NumDims-1> operator[](int i) const { 
-            return (*data)[i];
-        }
-    private:
-        uint64_t rt_id;
-        std::vector<uint64_t> start_coords;
-        int node_id;
-};
-
-

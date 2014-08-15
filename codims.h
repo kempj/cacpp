@@ -2,7 +2,7 @@
 
 struct codims {
     int size;
-    std::vector<int> D;
+    std::vector<uint64_t> D;
 
     codims(): size(0){ }
     
@@ -12,7 +12,7 @@ struct codims {
         }
     }
 
-    codims(std::initializer_list<int> l): D(l) {
+    codims(std::initializer_list<uint64_t> l): D(l) {
         size = l.size();
     }
 };

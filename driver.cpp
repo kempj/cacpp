@@ -1,11 +1,11 @@
 #include "coarray.h"
-
+/*
 void test1() {
     int id = this_image();
     int team_size = num_images();
     int extents[1];
     extents[0] = team_size;
-    coarray<int,1> test(extents);
+    coarray<int,1> test(dims(extents));
 
     for(int i = 0; i < team_size; i++) {
         test( (id+i) % team_size)[id] =  id ; 
@@ -113,7 +113,6 @@ void test1() {
     }
     
 }
-
 void test2() {
     int id = this_image();
     int team_size = num_images();
@@ -131,7 +130,6 @@ void test2() {
         }
     }
 
-    /*
      if(id == 0) {
         for(int i = 0; i < extents[0]; i++) {
             for(int j = 0; j < extents[1]; j++) {
@@ -144,7 +142,6 @@ void test2() {
         }
         cout << endl;
     }
-    */
     
     sync_all();
 
@@ -227,7 +224,6 @@ void test3() {
     }
     cout << endl;
 
-/*
     cout << "A: " << endl;
     for(int i =0; i < 5; i++) {
         A[i].print();
@@ -239,7 +235,7 @@ void test3() {
     cout << "C: " << endl;
     for(int i =0; i < 5; i++) {
         C[i].print();
-    }*/
+    }
 }
 void test4() {
     coarray<int,2> A(dims{4,4}, codims{1,2});
@@ -298,13 +294,12 @@ void test5() {
     }
 }
 
+*/
 int main(int argc, char **argv) 
 {
 
     int id = this_image();
     int team_size = num_images();
-
-    init_runtime(argc,argv);
 
     sync_all();
 

@@ -1,5 +1,20 @@
 #include "runtime.h"
 
+void coarray_runtime::barrier() {
+    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    int status = gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    //if(GASNET_OK != status)
+        //cout << "error while syncing all" << endl;
+}
+
+void coarray_runtime::sync_images(int *image_list, int size) {
+    num_waiting_images += size;
+    for(int i = 0; i < size; i++) {
+        gasnet_AMRequestShort1(image_list[i], 128, -1);
+    }
+    GASNET_BLOCKUNTIL(num_waiting_images == 0);
+}
+
 coarray_runtime::coarray_runtime(double seg_ratio, int argc, char **argv) {
     retval = gasnet_init(&argc, &argv);
 
@@ -16,7 +31,7 @@ coarray_runtime::coarray_runtime(double seg_ratio, int argc, char **argv) {
     }
 }
 
-coarray_runtime::put(void *src, void *dest, size_t size, size_t node){
+void coarray_runtime::put(int node, void *destination, void *source, size_t nbytes){
 
 }
 
