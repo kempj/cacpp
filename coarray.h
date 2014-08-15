@@ -34,7 +34,7 @@ class coarray {
         coarray(int *D, int cosize, int *C) : coarray(   dims(D,NumDims), 
                                                        codims(C, cosize) ) {}
         coarray(dims size, codims cosize) {
-            data.rt_id = RT.coarray_setup(size.D, cosize.D);
+            data.rt_id = RT.coarray_setup(size.D, cosize.D, sizeof(T));
             data.node_id = RT.get_image_id();
         }
         coarray(location_data parent_data, uint64_t i) : data(parent_data) {
@@ -64,20 +64,25 @@ class coarray<T,0> {
             data.start_coords.push_back(i);
         }
         const coarray<T,0>& operator=(const coarray<T,0> &other) {
-            //TODO
-            T *data;
+            //T *src =  (T*)RT.get_address(other.data);
+            T *data_addr = (T*)RT.get_address(data);
 
-            //*(RT.get_address(start_coords))= T(other);
-            if( RT.is_local_node(node_id)){
-                *data = T(other);
-            } else {
-                RT.put(node_id, dest, src, nbytes);
+            T tmp;
+            if(!RT.is_local_node(data.node_id)){
+                //data_addr is not a valid address on this node,
+                // so a temporary copy is needed
+                data_addr= &tmp;
+            } 
+            *data_addr = T(other);
+
+            if(!RT.is_local_node(data.node_id)) {
+                RT.put((*void)data_addr, data);//get_address(data), data.node_id, size);
             }
-
             return *this;
         }
         operator T() const {
             //TODO
+                //RT.get(src, dest, node, nbytes);
             /*T tmp;
             if(node_id != image_num){
                 gasnet_get(&tmp, node_id, data, sizeof(T));

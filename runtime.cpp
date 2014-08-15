@@ -47,7 +47,17 @@ coarray_runtime::coarray_runtime(double seg_ratio, int argc, char **argv) {
     }
 }
 
-void coarray_runtime::put(int node, void *destination, void *source, size_t nbytes){
+void coarray_runtime::put(void *source, void *destination, int node, size_t nbytes){
+    gasnet_put_bulk(node, destination, source, nbytes);
+}
+
+void coarray_runtime::get(void *source, void *destination, int node, size_t nbytes){
+    gasnet_get_bulk(destination, node, source, nbytes);
+}
+
+void coarray_runtime::put(void *source, location_data dest) {
+    uint64_t size = handles[dest.rt_id].stride_multiplier[dest.start_coords.size()-1];
+    put(source, get_address(dest), dest.node_id, size);
 
 }
 
