@@ -47,8 +47,9 @@ class coarray_runtime {
     public:
         coarray_runtime( double seg_ratio = .125, int argc = 0, char **argv = NULL );
         void wait_on_pending_writes();
-        void put(void *source, void *destination, int node, size_t nbytes); 
         void get(void *source, void *destination, int node, size_t nbytes);
+        void get(void *dest, location_data src);
+        void put(void *source, void *destination, int node, size_t nbytes); 
         void put(void *source, location_data dest); 
 
         int get_image_id(){

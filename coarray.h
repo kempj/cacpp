@@ -81,15 +81,13 @@ class coarray<T,0> {
             return *this;
         }
         operator T() const {
-            //TODO
-                //RT.get(src, dest, node, nbytes);
-            /*T tmp;
-            if(node_id != image_num){
-                gasnet_get(&tmp, node_id, data, sizeof(T));
-                return tmp;
+            T tmp;
+            if(RT.is_local_node(data.node_id)){
+                tmp = *((T*) (RT.get_address(data)));
+            } else {
+                RT.get(&tmp, data);
             }
-            return *data;*/
-            return 1;
+            return tmp;
         }
         const coarray<T,0>& operator=(const T &other) const {
             //TODO
