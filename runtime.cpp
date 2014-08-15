@@ -1,5 +1,15 @@
 #include "runtime.h"
 
+atomic<int> num_waiting_images {0};
+
+void increment_num_waiting_images(gasnet_token_t token, int inc_value) {
+    num_waiting_images += inc_value;
+}
+
+static gasnet_handlerentry_t handlers[] = {
+    {128, (void(*)())increment_num_waiting_images}
+};
+
 void coarray_runtime::barrier() {
     gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
     int status = gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
@@ -16,9 +26,15 @@ void coarray_runtime::sync_images(int *image_list, int size) {
 }
 
 coarray_runtime::coarray_runtime(double seg_ratio, int argc, char **argv) {
+    if(argc == 0){
+        char *tmp = "coarrayRT";
+        argv = &tmp;
+        argc = 1;
+    }
     retval = gasnet_init(&argc, &argv);
 
     int seg_size = (seg_ratio * gasnet_getMaxLocalSegmentSize());
+    seg_size -= seg_size % GASNET_PAGESIZE;
     retval = gasnet_attach(handlers, 1, seg_size, GASNET_PAGESIZE);
 
     image_num = gasnet_mynode();

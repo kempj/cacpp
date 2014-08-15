@@ -34,20 +34,11 @@ class coarray {
         coarray(int *D, int cosize, int *C) : coarray(   dims(D,NumDims), 
                                                        codims(C, cosize) ) {}
         coarray(dims size, codims cosize) {
-            rt_id = RT.coarray_setup(size.D, cosize.D);
-            node_id = RT.get_image_id();
+            data.rt_id = RT.coarray_setup(size.D, cosize.D);
+            data.node_id = RT.get_image_id();
         }
-        /*coarray(coarray other) : rt_id(other.rt_id),
-                                            start_coords(other.start_coords),
-                                            node_id(id) {}
-        */
-        coarray(uint64_t parent_id, 
-                std::vector<uint64_t> parent_coords, 
-                int parent_node_id, 
-                uint64_t i) : rt_id(parent_id), 
-                              start_coords(parent_coords),
-                              node_id(parent_node_id) {
-            start_coords.push_back(i);
+        coarray(location_data parent_data, uint64_t i) : data(parent_data) {
+            data.start_coords.push_back(i);
         }
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             return *this;//TODO
@@ -56,34 +47,33 @@ class coarray {
             return *this;
         }
         coarray<T,NumDims> operator()(int id){
-            coarray<T,NumDims> tmp(*this);
-            tmp.node_id = id;
-            return tmp;
+            return coarray(data, id);
         }
         coarray<T,NumDims-1> operator[](uint64_t i) { 
-            return coarray<T,NumDims-1>(rt_id, start_coords, node_id, i);
+            return coarray<T,NumDims-1>(data, i);
         }
     private:
         coarray();
-        uint64_t rt_id;
-        std::vector<uint64_t> start_coords;
-        int node_id;
+        location_data data;
 };
 
 template<typename T>
 class coarray<T,0> {
     public:
-        coarray(uint64_t parent_id, 
-                std::vector<uint64_t> parent_coords, 
-                int parent_node_id, 
-                uint64_t i) : rt_id(parent_id), 
-                              start_coords(parent_coords),
-                              node_id(parent_node_id) {
-            start_coords.push_back(i);
+        coarray(location_data parent_data, uint64_t i) : data(parent_data) {
+            data.start_coords.push_back(i);
         }
         const coarray<T,0>& operator=(const coarray<T,0> &other) {
             //TODO
+            T *data;
+
             //*(RT.get_address(start_coords))= T(other);
+            if( RT.is_local_node(node_id)){
+                *data = T(other);
+            } else {
+                RT.put(node_id, dest, src, nbytes);
+            }
+
             return *this;
         }
         operator T() const {
@@ -109,9 +99,7 @@ class coarray<T,0> {
         }
     private:
         coarray();
-        uint64_t rt_id;
-        std::vector<uint64_t> start_coords;
-        int node_id;
+        location_data data;
 };
 
         /*

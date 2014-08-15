@@ -7,6 +7,12 @@
 using std::vector;
 using std::atomic;
 
+struct location_data {
+    uint64_t rt_id;
+    std::vector<uint64_t> start_coords;
+    int node_id;
+};
+
 struct descriptor {
     descriptor( vector<uint64_t> D, vector<uint64_t> C, uint64_t delta) : extents(D), codims(C), offset(delta) {
         for(int i = 0; i < extents.size() - 1; i++) {
@@ -27,7 +33,7 @@ struct descriptor {
 
 class coarray_runtime {
     public:
-        coarray_runtime( double seg_ratio = .1, int argc = NULL, char **argv = NULL );
+        coarray_runtime( double seg_ratio = .125, int argc = 0, char **argv = NULL );
         void wait_on_pending_writes();
         void put(int node, void *destination, void *source, size_t nbytes); 
         void get(int node, void *destination, void *source, size_t nbytes);
@@ -37,6 +43,9 @@ class coarray_runtime {
         }
         int get_num_images() {
             return num_images;
+        }
+        bool is_local_node(int node_id) {
+            return node_id == image_num;
         }
         int coarray_setup(vector<uint64_t> dims, vector<uint64_t> codims) {
             int index = coarray_descriptors.size();
@@ -59,13 +68,4 @@ class coarray_runtime {
         int retval = GASNET_OK;
 };
 
-atomic<int> num_waiting_images {0};
-
-void increment_num_waiting_images(gasnet_token_t token, int inc_value) {
-    num_waiting_images += inc_value;
-}
-
-static gasnet_handlerentry_t handlers[] = {
-    {128, (void(*)())increment_num_waiting_images}
-};
 
