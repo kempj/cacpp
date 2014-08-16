@@ -325,6 +325,12 @@ int main(int argc, char **argv)
 
     sync_all();
 
+    for(int i = 0; i < num_images(); i++) {
+        if(this_image() == i) {
+            cout << "on image " << i << ", A[0][0] = " << A[0][0] << endl;
+        }
+        sync_all();
+    }
 
     return 1;
 }

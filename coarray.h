@@ -37,9 +37,13 @@ class coarray {
             data.rt_id = RT.coarray_setup(size.D, cosize.D, sizeof(T));
             data.node_id = RT.get_image_id();
         }
+        coarray(int id, location_data parent_data) : data(parent_data) {
+            data.node_id = id;
+        }
         coarray(location_data parent_data, uint64_t i) : data(parent_data) {
             data.start_coords.push_back(i);
         }
+
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             return *this;//TODO
         }
@@ -47,7 +51,7 @@ class coarray {
             return *this;
         }
         coarray<T,NumDims> operator()(int id){
-            return coarray(data, id);
+            return coarray(id, data);
         }
         coarray<T,NumDims-1> operator[](uint64_t i) { 
             return coarray<T,NumDims-1>(data, i);
@@ -60,6 +64,9 @@ class coarray {
 template<typename T>
 class coarray<T,0> {
     public:
+        coarray(int id, location_data parent_data) : data(parent_data) {
+            data.node_id = id;
+        }
         coarray(location_data parent_data, uint64_t i) : data(parent_data) {
             data.start_coords.push_back(i);
         }
@@ -91,13 +98,13 @@ class coarray<T,0> {
         }
         const coarray<T,0>& operator=(const T &other) const {
             //TODO
-            /*
-            T tmp = other;
-            if(image_num != node_id) {
-                gasnet_put(node_id, data, &tmp, sizeof(T));
+            if(RT.is_local_node(data.node_id)){
+                *((T*) (RT.get_address(data))) = other;
             } else {
-                *data = other;
-            }*/
+                T tmp = other;
+                RT.put(&tmp, data);
+            }
+
             return *this;
         }
     private:
