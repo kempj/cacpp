@@ -17,5 +17,7 @@ mm-local-2D: mmult-local.cpp coarray.h runtime.o
 vector-local-2D: mmult-local.cpp coarray.h runtime.o
 	$(CC) vector-local.cpp runtime.o -o vector-local -g -std=c++11 -I../../packages/gasnet/include/ -I../../packages/gasnet/include/mpi-conduit/ -L../../packages/gasnet/lib/ -lpthread -lgasnet-mpi-par -lammpi -lrt
 
+dist-vector: vector-dist.cpp coarray.h runtime.o
+	$(CC) vector-dist.cpp runtime.o -o dist-vector -g -std=c++11 -I../../packages/gasnet/include/ -I../../packages/gasnet/include/mpi-conduit/ -L../../packages/gasnet/lib/ -lpthread -lgasnet-mpi-par -lammpi -lrt
 clean:
 	rm -rf *.o cacpp
