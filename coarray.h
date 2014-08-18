@@ -43,9 +43,22 @@ class coarray {
         coarray(location_data parent_data, uint64_t i) : data(parent_data) {
             data.start_coords.push_back(i);
         }
-
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
-            return *this;//TODO
+            T *lhs_address = ((T*)RT.get_address(data));
+            T *rhs_address = ((T*)RT.get_address(other.data)); 
+            if(RT.is_local(data) && RT.is_local(other.data)){
+                *lhs_address = *rhs_address;
+            } else if(!RT.is_local(other.data) && RT.is_local(data)) {
+                RT.get(lhs_address, other.data);
+            } else if(!RT.is_local(data) && RT.is_local(other.data)) {
+                RT.put(rhs_address, data);
+            } else if(!RT.is_local(data) && !RT.is_local(other.data)) {
+                T *tmp = new T[RT.size(data)];
+                RT.get(tmp, other.data);
+                RT.put(tmp, data);
+                delete[] tmp;
+            } //else throw?
+            return *this;
         }
         coarray<T,NumDims>& operator()(){
             return *this;
@@ -71,41 +84,37 @@ class coarray<T,0> {
             data.start_coords.push_back(i);
         }
         const coarray<T,0>& operator=(const coarray<T,0> &other) {
-            //T *src =  (T*)RT.get_address(other.data);
             T *data_addr = (T*)RT.get_address(data);
 
             T tmp;
-            if(!RT.is_local_node(data.node_id)){
-                //data_addr is not a valid address on this node,
-                // so a temporary copy is needed
+            if(!RT.is_local(data)){
+                //data_addr is not a valid address on this node; a copy is needed
                 data_addr= &tmp;
             } 
             *data_addr = T(other);
 
-            if(!RT.is_local_node(data.node_id)) {
-                RT.put((*void)data_addr, data);//get_address(data), data.node_id, size);
+            if(!RT.is_local(data)) {
+                RT.put((*void)data_addr, data);
             }
             return *this;
         }
-        operator T() const {
-            T tmp;
-            if(RT.is_local_node(data.node_id)){
-                tmp = *((T*) (RT.get_address(data)));
-            } else {
-                RT.get(&tmp, data);
-            }
-            return tmp;
-        }
         const coarray<T,0>& operator=(const T &other) const {
-            //TODO
-            if(RT.is_local_node(data.node_id)){
+            if(RT.is_local(data)){
                 *((T*) (RT.get_address(data))) = other;
             } else {
                 T tmp = other;
                 RT.put(&tmp, data);
             }
-
             return *this;
+        }
+        operator T() const {
+            T tmp;
+            if(RT.is_local(data)){
+                tmp = *((T*) (RT.get_address(data)));
+            } else {
+                RT.get(&tmp, data);
+            }
+            return tmp;
         }
     private:
         coarray();

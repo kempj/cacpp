@@ -52,13 +52,13 @@ void coarray_runtime::put(void *source, void *destination, int node, size_t nbyt
 }
 
 void coarray_runtime::put(void *source, location_data dest) {
-    uint64_t size = handles[dest.rt_id].stride_multiplier[dest.start_coords.size()-1];
+    uint64_t size = handles[dest.rt_id].size(dest.start_coords);
     size *= handles[dest.rt_id].type_size;
     put(source, get_address(dest), dest.node_id, size);
 }
 
 void coarray_runtime::get(void *dest, location_data src){
-    uint64_t size = handles[src.rt_id].stride_multiplier[src.start_coords.size()-1];
+    uint64_t size = handles[src.rt_id].size(src.start_coords);
     size *= handles[src.rt_id].type_size;
     get(get_address(src), dest, src.node_id, size);
 }

@@ -33,6 +33,9 @@ struct descriptor {
         }
         return val;
     }
+    uint64_t size(std::vector<uint64_t> coords) {
+        return stride_multiplier[coords.size()-1];
+    }
     uint64_t num_elements;
     uint64_t total_size;
     uint64_t offset;
@@ -58,12 +61,15 @@ class coarray_runtime {
         int get_num_images() {
             return num_images;
         }
-        bool is_local_node(int node_id) {
-            return node_id == image_num;
+        bool is_local(location_data data) {
+            return data.node_id == image_num;
         }
         void* get_address(location_data loc) {
             void* base = segment_info[loc.node_id].addr;
             return base + handles[loc.rt_id].begin(loc.start_coords);
+        }
+        uint64_t size(location_data data){
+            return handles[data.rt_id].size(data.start_coords);
         }
         int coarray_setup(vector<uint64_t> dims, vector<uint64_t> codims, size_t type_size) {
             int index = handles.size();
