@@ -31,8 +31,9 @@ void sync_images(int *image_list, size_t size) {
 template<typename T, int NumDims>
 class coarray {
     public:
-        coarray(int *D, int cosize, int *C) : coarray(   dims(D,NumDims), 
+        coarray(int *D, int cosize, int *C) : coarray( dims(D,NumDims), 
                                                        codims(C, cosize) ) {}
+        coarray(dims size) : coarray(size, codims()) {}
         coarray(dims size, codims cosize) {
             data.rt_id = RT.coarray_setup(size.D, cosize.D, sizeof(T));
             data.node_id = RT.get_image_id();
@@ -86,6 +87,9 @@ class coarray {
         }
         coarray<T,NumDims-1> operator[](uint64_t i) { 
             return coarray<T,NumDims-1>(data, i);
+        }
+        T* get_data() {
+            return (T*)RT.get_address(data);
         }
     private:
         coarray();

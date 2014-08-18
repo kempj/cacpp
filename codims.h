@@ -5,7 +5,9 @@ struct codims {
     int size;
     std::vector<uint64_t> D;
 
-    codims(): size(0){ }
+    codims(): size(1){
+        D.push_back(1);
+    }
     
     codims(int *extents, int extent_dims) {
         for(int i = 0; i < extent_dims; i++) {

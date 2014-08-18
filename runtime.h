@@ -31,7 +31,7 @@ struct descriptor {
         for(int i = 0; i < coords.size(); i++) {
             val += coords[i] * stride_multiplier[i];
         }
-        return val;
+        return val * type_size;
     }
     uint64_t size(std::vector<uint64_t> coords) {
         return stride_multiplier[coords.size()-1];

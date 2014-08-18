@@ -1,7 +1,7 @@
 #include "coarray.h"
 #include <chrono>
 
-void init(coarray<int, 1> const array, int size){
+void init(coarray<int, 1> array, int size){
     for(int i = 0; i < size; i++) {
         array[i] = i;
     }
@@ -48,21 +48,9 @@ void scalar_mult( coarray<int, 1> A, int scalar, int size){
         A[i] = A[i] * scalar;
     }
 }
-void scalar_add_ranged( coarray<int, 1> A, int scalar, int size){
-    for(int &element : A()) {
-        element += scalar;
-    }
-}
-void scalar_mult_ranged( coarray<int, 1> A, int scalar, int size){
-    for(auto &element : A()) {
-        element *= scalar;
-    }
-}
 
 int main(int argc, char **argv) 
 {
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
 
     int id = this_image();
     int team_size = num_images();
@@ -72,9 +60,9 @@ int main(int argc, char **argv)
     ex[0] = size;
     int scalar = 42;
 
-    const coarray<int,1> A(ex);
+    coarray<int,1> A(dims{size});
 
-    const coarray<int,1> B(ex);
+    coarray<int,1> B(dims{size});
 
     init(A, size);
     init(B, size);
@@ -109,12 +97,6 @@ int main(int argc, char **argv)
 
     init(A, size);
     start= std::chrono::system_clock::now();
-    scalar_mult_ranged(A, scalar, size);
-    stop = std::chrono::system_clock::now();
-    cout << A[1] << " coarray scalar mult ranged time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop - start).count() << " microseconds" << endl;
-
-    init(A, size);
-    start= std::chrono::system_clock::now();
     scalar_mult(A, scalar, size);
     stop = std::chrono::system_clock::now();
     cout << A[1] << " coarray scalar mult time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop - start).count() << " microseconds" << endl;
@@ -125,11 +107,6 @@ int main(int argc, char **argv)
     stop = std::chrono::system_clock::now();
     cout << A[1] << " normal scalar mult time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop - start).count()  << " microseconds" << endl;
 
-    init(A, size);
-    start= std::chrono::system_clock::now();
-    scalar_add_ranged(A, scalar, size);
-    stop = std::chrono::system_clock::now();
-    cout << A[1] << " coarray scalar add range time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop - start).count() << " microseconds" << endl;
 
     init(A, size);
     start= std::chrono::system_clock::now();
