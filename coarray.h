@@ -66,6 +66,24 @@ class coarray {
         coarray<T,NumDims> operator()(int id){
             return coarray(id, data);
         }
+        coarray<T,NumDims>& operator()(int first, int second, ...){
+            va_list args;
+            va_start(args, second);
+            std::vector<int> index;
+            index.push_back(first);
+            index.push_back(second);
+            uint64_t cosize = RT.handles[data.rt_id].codims.size();
+            for(int i = 2; i < cosize; i++){
+                index.push_back(va_arg(args, int));
+            }
+            va_end(args);
+
+            int current_index = index.back();
+            for(int i = index.size()-1; i > 0; i--){
+                current_index += index[i-1] * codims[i];
+            }
+            return coarray(current_index, *this);
+        }
         coarray<T,NumDims-1> operator[](uint64_t i) { 
             return coarray<T,NumDims-1>(data, i);
         }
@@ -77,6 +95,11 @@ class coarray {
 template<typename T>
 class coarray<T,0> {
     public:
+        //TODO, decide how to do co-scalars
+        //coarray(dims size, codims cosize) {
+        //    data.rt_id = RT.coarray_setup(size.D, cosize.D, sizeof(T));
+        //    data.node_id = RT.get_image_id();
+        //}
         coarray(int id, location_data parent_data) : data(parent_data) {
             data.node_id = id;
         }
@@ -121,23 +144,3 @@ class coarray<T,0> {
         location_data data;
 };
 
-        /*
-        //TODO
-        coref<T,NumDims>& operator()(int first, int second, ...){
-            va_list args;
-            va_start(args, second);
-            std::vector<int> index;
-            index.push_back(first);
-            index.push_back(second);
-            for(int i = 2; i < codims.size(); i++){
-                index.push_back(va_arg(args, int));
-            }
-            va_end(args);
-
-            int current_index = index.back();
-            for(int i = index.size()-1; i > 0; i--){
-                current_index += index[i-1] * codims[i];
-            }
-            return *(remote_data[current_index]);
-        }
-        */
