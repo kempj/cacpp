@@ -45,6 +45,26 @@ struct descriptor {
     vector<uint64_t> codims;
 };
 
+struct comm_handle {
+    gasnet_handle_t gasnet_handle;
+    int node;
+    void *destination;
+    void *source;
+    size_t nbytes;
+    comm_handle *next;
+}
+
+comm_handle_list {
+    comm_handle list*;
+
+    public:
+        void add(comm_handle);
+        void wait();
+        bool has_conflict(void *destination, int node, size_t nbytes);
+        comm_handle get_conflict(void *destination, int node, size_t nbytes);
+        void wait(comm_handle);
+}
+
 
 class coarray_runtime {
     public:

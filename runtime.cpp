@@ -18,6 +18,9 @@ void coarray_runtime::barrier() {
 }
 
 void coarray_runtime::sync_images(int *image_list, int size) {
+    //does this work if 2 back to back sync images are done by 
+    // either the same or different image set? should it?
+    // do all reads and writes need to be done between the two images?
     num_waiting_images += size;
     for(int i = 0; i < size; i++) {
         gasnet_AMRequestShort1(image_list[i], 128, -1);
@@ -48,7 +51,12 @@ coarray_runtime::coarray_runtime(double seg_ratio, int argc, char **argv) {
 }
 
 void coarray_runtime::put(void *source, void *destination, int node, size_t nbytes){
-    gasnet_put_bulk(node, destination, source, nbytes);
+    //bool conflict = check_access_conflict(destination, node, nbytes);
+    //if(conflict) {
+    //    wait_on_conflict();
+    //}
+
+    auto tmp_handle = gasnet_put_nb_bulk(node, destination, source, nbytes);
 }
 
 void coarray_runtime::put(void *source, location_data dest) {
