@@ -103,7 +103,7 @@ class coarray_runtime {
         }
         void barrier();
         void sync_images(int *image_list, int size);
-        void wait(coarray_data data){
+        void wait(location_data data){
         }
         void wait_all(){
             //spin on atomic

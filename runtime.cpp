@@ -58,7 +58,8 @@ void coarray_runtime::put(void *source, void *destination, int node, size_t nbyt
     //    wait_on_conflict();
     //}
 
-    auto tmp_handle = gasnet_put_nb_bulk(node, destination, source, nbytes);
+    //auto tmp_handle = gasnet_put_nb_bulk(node, destination, source, nbytes);
+    gasnet_put_bulk(node, destination, source, nbytes);
 }
 
 void coarray_runtime::put(void *source, location_data dest) {
