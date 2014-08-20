@@ -20,7 +20,9 @@ void coarray_runtime::barrier() {
 void coarray_runtime::sync_images(int *image_list, int size) {
     //does this work if 2 back to back sync images are done by 
     // either the same or different image set? should it?
+    // No, it needs an array. TODO
     // do all reads and writes need to be done between the two images?
+    // It's the end of a segment, so _all_ communication must be done.
     num_waiting_images += size;
     for(int i = 0; i < size; i++) {
         gasnet_AMRequestShort1(image_list[i], 128, -1);

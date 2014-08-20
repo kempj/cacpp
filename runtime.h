@@ -52,10 +52,10 @@ struct comm_handle {
     void *source;
     size_t nbytes;
     comm_handle *next;
-}
+};
 
-comm_handle_list {
-    comm_handle list*;
+class comm_handle_list {
+    comm_handle *list;
 
     public:
         void add(comm_handle);
@@ -63,7 +63,7 @@ comm_handle_list {
         bool has_conflict(void *destination, int node, size_t nbytes);
         comm_handle get_conflict(void *destination, int node, size_t nbytes);
         void wait(comm_handle);
-}
+};
 
 
 class coarray_runtime {
@@ -103,6 +103,12 @@ class coarray_runtime {
         }
         void barrier();
         void sync_images(int *image_list, int size);
+        void wait(coarray_data data){
+        }
+        void wait_all(){
+            //spin on atomic
+            //go through comm list until list is empty
+        }
     private:
         vector<descriptor> handles;
         gasnet_seginfo_t *segment_info;
