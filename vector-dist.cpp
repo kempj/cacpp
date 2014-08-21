@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     int id = this_image();
     int team_size = num_images();
 
-    int size = 32*1024;
+    int size = 64*1024;
     int ex[1];
     ex[0] = size;
     int scalar = 42;

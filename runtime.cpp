@@ -54,13 +54,13 @@ void coarray_runtime::put(void *source, void *destination, int node, size_t nbyt
     gasnet_put_bulk(node, destination, source, nbytes);
 }
 
-void coarray_runtime::put(void *source, location_data dest) {
+void coarray_runtime::put(void *source, const location_data& dest) {
     uint64_t size = handles[dest.rt_id].size(dest.start_coords);
     size *= handles[dest.rt_id].type_size;
     put(source, get_address(dest), dest.node_id, size);
 }
 
-void coarray_runtime::get(void *dest, location_data src){
+void coarray_runtime::get(void *dest, const location_data& src){
     uint64_t size = handles[src.rt_id].size(src.start_coords);
     size *= handles[src.rt_id].type_size;
     get(get_address(src), dest, src.node_id, size);

@@ -16,7 +16,7 @@ struct location_data {
 };
 
 struct descriptor {
-    descriptor( vector<uint64_t> D, vector<uint64_t> C, uint64_t delta, size_t ts) : extents(D), codims(C), offset(delta), type_size(ts) {
+    descriptor( const vector<uint64_t>& D, const vector<uint64_t>& C, uint64_t delta, size_t ts) : extents(D), codims(C), offset(delta), type_size(ts) {
         for(int i = 0; i < extents.size() - 1; i++) {
             stride_multiplier.push_back(extents[extents.size()-1]);
         }
@@ -27,14 +27,14 @@ struct descriptor {
         num_elements = extents[0] * stride_multiplier[0];
         total_size = num_elements * type_size;
     }
-    uint64_t begin(std::vector<uint64_t> coords) {
+    uint64_t begin(const std::vector<uint64_t>& coords) {
         uint64_t val = offset;
         for(int i = 0; i < coords.size(); i++) {
             val += coords[i] * stride_multiplier[i];
         }
         return val * type_size;
     }
-    uint64_t size(std::vector<uint64_t> coords) {
+    uint64_t size(const std::vector<uint64_t>& coords) {
         return stride_multiplier[coords.size()-1];
     }
     uint64_t num_elements;
@@ -45,7 +45,7 @@ struct descriptor {
     vector<uint64_t> stride_multiplier;
     vector<uint64_t> codims;
 };
-
+/*
 struct comm_handle {
     gasnet_handle_t gasnet_handle;
     int node;
@@ -65,16 +65,16 @@ class comm_handle_list {
         comm_handle get_conflict(void *destination, int node, size_t nbytes);
         void wait(comm_handle);
 };
-
+*/
 
 class coarray_runtime {
     public:
         coarray_runtime( uint64_t segsize, int argc , char **argv );
         void wait_on_pending_writes();
         void get(void *source, void *destination, int node, size_t nbytes);
-        void get(void *dest, location_data src);
+        void get(void *dest, const location_data& src);
         void put(void *source, void *destination, int node, size_t nbytes); 
-        void put(void *source, location_data dest); 
+        void put(void *source, const location_data& dest); 
 
         int get_image_id(){
             return image_num;
@@ -82,14 +82,14 @@ class coarray_runtime {
         int get_num_images() {
             return num_images;
         }
-        bool is_local(location_data data) {
+        bool is_local(const location_data& data) {
             return data.node_id == image_num;
         }
-        void* get_address(location_data loc) {
+        void* get_address(const location_data& loc) {
             void* base = segment_info[loc.node_id].addr;
             return base + handles[loc.rt_id].begin(loc.start_coords);
         }
-        uint64_t size(location_data data){
+        uint64_t size(const location_data& data){
             return handles[data.rt_id].size(data.start_coords);
         }
         int coarray_setup(vector<uint64_t> dims, vector<uint64_t> codims, size_t type_size) {
@@ -103,12 +103,12 @@ class coarray_runtime {
         }
         void barrier();
         void sync_images(int *image_list, int size);
-        void wait(location_data data){
+        void wait(const location_data& data){
         }
-        void wait_all(){
+        //void wait_all(){
             //spin on atomic
             //go through comm list until list is empty
-        }
+        //}
         int retval = GASNET_OK;
     private:
         vector<descriptor> handles;

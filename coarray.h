@@ -12,7 +12,7 @@ using std::atomic;
 using std::cout;
 using std::endl;
 
-std::shared_ptr<coarray_runtime> RT;//do I need to call () here?
+std::shared_ptr<coarray_runtime> RT;
 
 void coarray_init( uint64_t segsize = 1024*GASNET_PAGESIZE, int argc = 0, char **argv = NULL ){
     if(argc == 0){
