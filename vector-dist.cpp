@@ -16,11 +16,11 @@ void mult( coarray<int, 1> A, coarray<int, 1> B, int size){
 int main(int argc, char **argv) 
 {
 
-    coarray_init(128*1024, argc, argv);
+    coarray_init(1024*1024, argc, argv);
     int id = this_image();
     int team_size = num_images();
 
-    int size = 64*1024;
+    int size = 32*1024;
     int ex[1];
     ex[0] = size;
     int scalar = 42;
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     std::chrono::time_point <std::chrono::system_clock> start, stop;
 
     if(id == 0) {
-        cout << "before, A[0] = " << A[10] << endl;
+        cout << "before, A[10] = " << A[10] << endl;
     }
 
     start= std::chrono::system_clock::now();
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     sync_all();
 
     if(id == 0) {
-        cout << "after, A[0] = " << A[10] << endl;
+        cout << "after, A[10] = " << A((id+1)%team_size)[10] << endl;
         cout << "coarray mult time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop - start).count() << " microseconds" << endl;
     }
 
