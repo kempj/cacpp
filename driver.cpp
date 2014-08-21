@@ -298,6 +298,7 @@ void test5() {
 int main(int argc, char **argv) 
 {
 
+    coarray_init(128*1024, argc, argv);
     int id = this_image();
     int team_size = num_images();
 
@@ -331,6 +332,7 @@ int main(int argc, char **argv)
         }
         sync_all();
     }
+    coarray_exit();
 
     return 1;
 }

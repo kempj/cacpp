@@ -1,6 +1,7 @@
 #include <vector>
 #include <atomic>
 #include <stdexcept>
+#include <iostream>
 
 #define GASNET_PAR 1
 #include "gasnet.h"
@@ -68,7 +69,7 @@ class comm_handle_list {
 
 class coarray_runtime {
     public:
-        coarray_runtime( double seg_ratio = .125, int argc = 0, char **argv = NULL );
+        coarray_runtime( uint64_t segsize, int argc , char **argv );
         void wait_on_pending_writes();
         void get(void *source, void *destination, int node, size_t nbytes);
         void get(void *dest, location_data src);
@@ -98,7 +99,6 @@ class coarray_runtime {
             return index;
         }
         ~coarray_runtime() {
-            gasnet_exit(retval);
             delete[] segment_info;
         }
         void barrier();
@@ -109,13 +109,13 @@ class coarray_runtime {
             //spin on atomic
             //go through comm list until list is empty
         }
+        int retval = GASNET_OK;
     private:
         vector<descriptor> handles;
         gasnet_seginfo_t *segment_info;
         int image_num = -1;
         int num_images = -1;
         uint64_t data_size = 0;//Needed globally to keep track of the beginning of each new coarray
-        int retval = GASNET_OK;
 };
 
 

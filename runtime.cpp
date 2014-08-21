@@ -30,22 +30,14 @@ void coarray_runtime::sync_images(int *image_list, int size) {
     GASNET_BLOCKUNTIL(num_waiting_images == 0);
 }
 
-coarray_runtime::coarray_runtime(double seg_ratio, int argc, char **argv) {
-    if(argc == 0){
-        char *tmp = "coarrayRT";
-        argv = &tmp;
-        argc = 1;
-    }
+coarray_runtime::coarray_runtime( uint64_t segsize, int argc, char **argv) {
     retval = gasnet_init(&argc, &argv);
-
-    int seg_size = (seg_ratio * gasnet_getMaxLocalSegmentSize());
-    seg_size -= seg_size % GASNET_PAGESIZE;
-    retval = gasnet_attach(handlers, 1, seg_size, GASNET_PAGESIZE);
 
     image_num = gasnet_mynode();
     num_images = gasnet_nodes();
-    segment_info = new gasnet_seginfo_t[num_images];
 
+    retval = gasnet_attach(handlers, 1, segsize, GASNET_PAGESIZE);
+    segment_info = new gasnet_seginfo_t[num_images];
     retval = gasnet_getSegmentInfo(segment_info, num_images);
     if( GASNET_OK != retval) {
         throw std::runtime_error("failed to get segment info");
