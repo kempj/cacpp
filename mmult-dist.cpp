@@ -1,55 +1,45 @@
 #include "coarray.h"
+#include <chrono>
 
-void init2D(coarray<int, 2> array, int extents[2]){
-    for(int i = 0; i < extents[0]; i++) {
-        for(int j = 0; j < extents[1]; j++) {
-            array[i][j] = i*extents[1] + j;
+const int size = 128;
+int num_rows;
+int last_num_rows;
+
+void coinit2D(coarray<int, 2> array ){
+    int id = this_image();
+    int tot = num_images();
+    int start = id * num_rows;
+    int end = (id + 1) * num_rows;
+    if(id == tot - 1)
+        end = size;
+
+    for(int i = start; i < end; i++) {
+        for(int j = 0; j < size; j++) {
+            array[i - start][j] = i*size + j;
         }
     }
 }
 
-void coinit2D(coarray<int, 2> array, int extents[2]){
+void comult2D( coarray<int, 2> A,
+               coarray<int, 2> B,
+               coarray<int, 2> C){
     int id = this_image();
     int tot = num_images();
-    for(int i = id % tot; i < extents[0]; i += tot) {
-        for(int j = 0; j < extents[1]; j++) {
-            array[i][j] = i*extents[1] + j;
-        }
-    }
-}
+    int section_size = num_rows;
+    if(id == tot - 1)
+        section_size = last_num_rows;
+    
 
-void comult2D( coarray<int, 2> A, int e1[2],
-               coarray<int, 2> B, int e2[2],
-               coarray<int, 2> C, int e3[2]){
-    int height = e2[1];
-    int width = e1[0];
-    int id = this_image();
-    int tot = num_images();
-
-    for(int row = id%tot; row < height; row += tot) {
-        for(int col = 0; col < width; col++) {
+    for(int row = 0; row < section_size; row++) {
+        for(int col = 0; col < size; col++) {
             C[row][col] = 0;
-            for(int inner = 0; inner < e1[1]; inner++) {
-                coref<int, 1> tmp = B(inner%tot)[inner];
-                C[row][col] = C[row][col] + A[row][inner] * tmp[col];
-                //C[row][col] = C[row][col] + A[row][inner] * B(inner%tot)[inner][col];
-                //C[row][col] = C[row][col] + A[row][inner] * B[inner][col];
+            for(int CA = 0; CA < tot-1; CA++) {
+                for(int inner = 0; inner < num_rows; inner++) {
+                    C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
+                }
             }
-        }
-    }
-}
-
-void mult2D( coarray<int, 2> A, int e1[2],
-             coarray<int, 2> B, int e2[2],
-             coarray<int, 2> C, int e3[2]){
-    int height = e2[1];
-    int width = e1[0];
-
-    for(int row = 0; row < height; row++) {
-        for(int col = 0; col < width; col++) {
-            C[row][col] = 0;
-            for(int inner = 0; inner < e1[1]; inner++) {
-                C[row][col] = C[row][col] + A[row][inner] * B[inner][col];
+            for(int inner = 0; inner < last_num_rows; inner++) {
+                C[row][col] = C[row][col] + A[row][inner + (tot-1)*last_num_rows] * B(tot-1)[inner][col];
             }
         }
     }
@@ -57,54 +47,64 @@ void mult2D( coarray<int, 2> A, int e1[2],
 
 int main(int argc, char **argv) 
 {
-    GASNET_SAFE(gasnet_init(&argc, &argv));
-    GASNET_SAFE(gasnet_attach(NULL, 0, GASNET_PAGESIZE, GASNET_PAGESIZE));
+    coarray_init(3*8*1024*1024, argc, argv);
 
     int id = this_image();
     int team_size = num_images();
+    last_num_rows = size - ((team_size-1)*(size/team_size));
+    num_rows = size / team_size;
 
-    int e1[] = {3,2};
-    int e2[] = {2,3};
-    int e3[] = {3,3};
+    coarray<int,2> A(dims{last_num_rows,size});
+    coarray<int,2> B(dims{last_num_rows,size});
+    coarray<int,2> C(dims{last_num_rows,size});
 
-    coarray<int,2> A(e1);
-    coarray<int,2> B(e2);
-    coarray<int,2> C(e3);
-
-    coinit2D(A, e1);
-    coinit2D(B, e2);
-
-    sync_all();
-    comult2D(A, e1, B, e2, C, e3);
+    coinit2D(A);
+    coinit2D(B);
 
     sync_all();
 
+    std::chrono::time_point <std::chrono::system_clock> start, stop, stop2;
+    start= std::chrono::system_clock::now();
+    comult2D(A, B, C);
+
+    stop = std::chrono::system_clock::now();
+
+    sync_all();
+
+    stop2 = std::chrono::system_clock::now();
+
+    if(id == 0) {
+        cout << "after, A[10] = " << A((id+1)%team_size)[10] << endl;
+        cout << "coarray mult time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop - start).count() << " microseconds" << endl;
+        cout << "coarray mult  + barrier time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop2 - start).count() 
+             << " microseconds" << endl;
+    }
+
+    /*
     if(this_image() == 0) {
         cout << "\nA: " << endl;
-        for(int i =0; i < e1[0]; i++) {
-            for(int j=0; j < e1[1]; j++) {
+        for(int i =0; i < size; i++) {
+            for(int j=0; j < size; j++) {
                 cout << A(i%team_size)[i][j] << ", ";
             }
             cout << endl;
         }
         cout << "\nB: " << endl;
-        for(int i =0; i < e2[0]; i++) {
-            for(int j=0; j < e2[1]; j++) {
+        for(int i =0; i < size; i++) {
+            for(int j=0; j < size; j++) {
                 cout << B(i%team_size)[i][j] << ", ";
             }
             cout << endl;
         }
         cout << "\nC: " << endl;
-        for(int i =0; i < e3[0]; i++) {
-            for(int j=0; j < e3[1]; j++) {
+        for(int i =0; i < size; i++) {
+            for(int j=0; j < size; j++) {
                 cout << C(i%team_size)[i][j] << ", ";
             }
             cout << endl;
         }
-    }
-    sync_all();
-
-    gasnet_exit(0);
+    }*/
+    coarray_exit();
 
     return 1;
 }
