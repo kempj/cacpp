@@ -98,7 +98,7 @@ class coarray {
 
             int current_index = index.back();
             for(int i = index.size()-1; i > 0; i--){
-                current_index += index[i-1] * codims[i];
+                current_index += index[i-1] * RT->handles[data.rt_id].codims[i];
             }
             return coarray(current_index, *this);
         }
