@@ -140,7 +140,7 @@ class coarray<T,0> {
             *data_addr = T(other);
 
             if(!RT->is_local(data)) {
-                RT->put((*void)data_addr, data);
+                RT->put((void*)data_addr, data);
             }
             return *this;
         }
