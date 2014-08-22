@@ -16,7 +16,7 @@ void mult( coarray<int, 1> A, coarray<int, 1> B, int size){
 int main(int argc, char **argv) 
 {
 
-    coarray_init(1024*1024, argc, argv);
+    coarray_init(64*1024*1024, argc, argv);
     int id = this_image();
     int team_size = num_images();
 
