@@ -16,7 +16,8 @@ struct location_data {
 };
 
 struct descriptor {
-    descriptor( const vector<uint64_t>& D, const vector<uint64_t>& C, uint64_t delta, size_t ts) : extents(D), codims(C), offset(delta), type_size(ts) {
+    descriptor( const vector<uint64_t>& D, const vector<uint64_t>& C, 
+                uint64_t delta, size_t ts) : extents(D), codims(C), offset(delta), type_size(ts) {
         for(int i = 0; i < extents.size() - 1; i++) {
             stride_multiplier.push_back(extents[extents.size()-1]);
         }
@@ -45,27 +46,6 @@ struct descriptor {
     vector<uint64_t> stride_multiplier;
     vector<uint64_t> codims;
 };
-/*
-struct comm_handle {
-    gasnet_handle_t gasnet_handle;
-    int node;
-    void *destination;
-    void *source;
-    size_t nbytes;
-    comm_handle *next;
-};
-
-class comm_handle_list {
-    comm_handle *list;
-
-    public:
-        void add(comm_handle);
-        void wait();
-        bool has_conflict(void *destination, int node, size_t nbytes);
-        comm_handle get_conflict(void *destination, int node, size_t nbytes);
-        void wait(comm_handle);
-};
-*/
 
 class coarray_runtime {
     public:
@@ -92,6 +72,9 @@ class coarray_runtime {
         uint64_t size(const location_data& data){
             return handles[data.rt_id].size(data.start_coords);
         }
+        vector<uint64_t>& get_codims(const location_data& data){
+            return handles[data.rt_id].codims;
+        }
         int coarray_setup(vector<uint64_t> dims, vector<uint64_t> codims, size_t type_size) {
             int index = handles.size();
             handles.push_back( descriptor(dims, codims, data_size, type_size));
@@ -104,12 +87,6 @@ class coarray_runtime {
         }
         void barrier();
         void sync_images(int *image_list, int size);
-        void wait(const location_data& data){
-        }
-        //void wait_all(){
-            //spin on atomic
-            //go through comm list until list is empty
-        //}
         int retval = GASNET_OK;
     private:
         vector<descriptor> handles;

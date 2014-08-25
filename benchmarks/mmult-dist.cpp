@@ -40,7 +40,7 @@ void comult2D( coarray<int, 2> A,
             }
             //TODO: add a temp local copy of B(CA)[:][col]
             for(size_t inner = 0; inner < last_num_rows; inner++) {
-                C[row][col] = C[row][col] + A[row][inner + (tot-1)*last_num_rows] * B(tot-1)[inner][col];
+                C[row][col] = C[row][col] + A[row][inner + (tot-1)*num_rows] * B(tot-1)[inner][col];
             }
         }
     }

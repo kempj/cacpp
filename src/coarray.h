@@ -6,7 +6,6 @@
 #include "runtime.h"
 #include "dims.h"
 #include "codims.h"
-//#include "fast_array.h"
 
 using std::atomic;
 using std::cout;
@@ -14,19 +13,18 @@ using std::endl;
 
 std::shared_ptr<coarray_runtime> RT;
 
-void coarray_init( uint64_t segsize = 1024*GASNET_PAGESIZE, int argc = 0, char **argv = NULL ){
+void coarray_init( uint64_t segsize = 4*1024*1024, int argc = 0, char **argv = NULL ){
     if(argc == 0){
-        char *tmp = "coarrayRT";
+        char *tmp = (char*)"coarrayRT";
         argv = &tmp;
         argc = 1;
     }
-    segsize -= segsize % GASNET_PAGESIZE;
+    segsize -= segsize % 4*1024;
     RT.reset(new coarray_runtime(segsize, argc, argv));
 }
 
 void coarray_exit() {
-    gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS);
-    gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);
+    RT->barrier();
     gasnet_exit(RT->retval);
 }
 
@@ -90,15 +88,15 @@ class coarray {
             std::vector<int> index;
             index.push_back(first);
             index.push_back(second);
-            uint64_t cosize = RT->handles[data.rt_id].codims.size();
-            for(int i = 2; i < cosize; i++){
+            vector<uint64_t> codims  = RT->get_codims(data);
+            for(size_t i = 2; i < codims.size(); i++){
                 index.push_back(va_arg(args, int));
             }
             va_end(args);
 
             int current_index = index.back();
             for(int i = index.size()-1; i > 0; i--){
-                current_index += index[i-1] * RT->handles[data.rt_id].codims[i];
+                current_index += index[i-1] * codims[i];
             }
             return coarray(current_index, *this);
         }
@@ -108,8 +106,24 @@ class coarray {
         operator T*() {
             return (T*)RT->get_address(data);
         }
-        T* get_data() {
+        T* begin() {
             return (T*)RT->get_address(data);
+        }
+        T* end() {
+            return (T*)RT->get_address(data) + RT->size(data);
+        }
+        size_t size() {
+            return RT->size(data);
+        }
+        bool is_local() {
+            return RT->is_local(data);
+        }
+        void copy_to(T* addr){
+            if(!is_local()){
+                RT->get(addr, data);
+            } else {
+                data = std::copy(begin(), end(), data);
+            }
         }
     private:
         coarray();

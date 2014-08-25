@@ -3,6 +3,8 @@ INC=-I../../../packages/gasnet/include -I../../../packages/gasnet/include/mpi-co
 LIB=-L../../../packages/gasnet/lib
 
 all: ../bin/dist-vector ../bin/dist-mmult
+
+dist-mult: ../bin/dist-mmult
 	
 .PHONY : ../bin/runtime.o
 ../bin/runtime.o: 
