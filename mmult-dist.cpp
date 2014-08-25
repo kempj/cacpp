@@ -2,8 +2,8 @@
 #include <chrono>
 
 const int size = 128;
-int num_rows;
-int last_num_rows;
+size_t num_rows;
+size_t last_num_rows;
 
 void coinit2D(coarray<int, 2> array ){
     int id = this_image();
@@ -34,12 +34,12 @@ void comult2D( coarray<int, 2> A,
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
             for(int CA = 0; CA < tot-1; CA++) {
-                for(int inner = 0; inner < num_rows; inner++) {
+                for(size_t inner = 0; inner < num_rows; inner++) {
                     C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
                 }
             }
             //TODO: add a temp local copy of B(CA)[:][col]
-            for(int inner = 0; inner < last_num_rows; inner++) {
+            for(size_t inner = 0; inner < last_num_rows; inner++) {
                 C[row][col] = C[row][col] + A[row][inner + (tot-1)*last_num_rows] * B(tot-1)[inner][col];
             }
         }

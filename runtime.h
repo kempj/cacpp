@@ -96,6 +96,7 @@ class coarray_runtime {
             int index = handles.size();
             handles.push_back( descriptor(dims, codims, data_size, type_size));
             data_size += handles[index].total_size;
+            //TODO: Do I want to round this up/align the data?
             return index;
         }
         ~coarray_runtime() {
