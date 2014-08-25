@@ -3,6 +3,19 @@
 template<typename T, int NumDims>
 class fast_array {
     public:
+        fast_array(size_t size) {
+            data = new T[size];
+        }
+        ~fast_array() {
+            delete[] data;
+        }
+
+        fast_array<T,NumDims>& operator=(T *new_data){
+            if(data) {
+                delete[] data;
+            }
+            data = new_data;
+        }
         fast_array<T,NumDims>& operator=(coarray<T, NumDims> &original){
             if(!data){
                 data = new T[original.size()];
@@ -15,12 +28,14 @@ class fast_array {
                 data = std::copy(original.begin(),original.end(), data);
             }
         }
-        T operator[](uint64_t idx) {
+        T operator[](size_t idx) {
             return data[idx];
         }
     private:
         //Do I benefit from forcing the user to specify the size
         // by making the default constructor private?
+
+        //TODO: use smart pointer?
         T* data;
 };
 
