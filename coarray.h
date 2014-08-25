@@ -6,6 +6,7 @@
 #include "runtime.h"
 #include "dims.h"
 #include "codims.h"
+#include "fast_array.h"
 
 using std::atomic;
 using std::cout;
