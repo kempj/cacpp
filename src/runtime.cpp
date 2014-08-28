@@ -45,12 +45,6 @@ coarray_runtime::coarray_runtime( size_t segsize, int argc, char **argv) {
 }
 
 void coarray_runtime::put(void *source, void *destination, int node, size_t nbytes){
-    //bool conflict = check_access_conflict(destination, node, nbytes);
-    //if(conflict) {
-    //    wait_on_conflict();
-    //}
-
-    //auto tmp_handle = gasnet_put_nb_bulk(node, destination, source, nbytes);
     gasnet_put_bulk(node, destination, source, nbytes);
 }
 

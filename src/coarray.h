@@ -6,6 +6,7 @@
 #include "runtime.h"
 #include "dims.h"
 #include "codims.h"
+#include "range.h"
 
 using std::atomic;
 using std::cout;
@@ -46,6 +47,7 @@ void sync_images(int *image_list, size_t size) {
 template<typename T, int NumDims>
 class coarray {
     public:
+        //Constructors:
         coarray(int *D, int cosize, int *C) : coarray( dims(D,NumDims), 
                                                        codims(C, cosize) ) {}
         coarray(dims size) : coarray(size, codims()) {}
@@ -53,23 +55,23 @@ class coarray {
             data.rt_id = RT->coarray_setup(size.D, cosize.D, sizeof(T));
             data.node_id = RT->get_image_id();
         }
-        coarray(int id, location_data parent_data) : data(parent_data) {
-            data.node_id = id;
+        coarray(location_data parent_data) : data(parent_data) {
         }
         coarray(location_data parent_data, size_t i) : data(parent_data) {
             data.start_coords.push_back(i);
         }
-
+        //--------------
+        //TODO: check for extents, and do strided gets and puts, and local copies.
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
-            T *lhs_address = ((T*)RT->get_address(data));
-            T *rhs_address = ((T*)RT->get_address(other.data)); 
-            if(RT->is_local(data) && RT->is_local(other.data)){
-                *lhs_address = *rhs_address;
-            } else if(!RT->is_local(other.data) && RT->is_local(data)) {
-                RT->get(lhs_address, other.data);
-            } else if(!RT->is_local(data) && RT->is_local(other.data)) {
-                RT->put(rhs_address, data);
-            } else if(!RT->is_local(data) && !RT->is_local(other.data)) {
+            T *lhs = ((T*)RT->get_address(data));
+            T *rhs = ((T*)RT->get_address(other.data)); 
+            if(this->is_local() && other.is_local()){
+                *lhs = *rhs;
+            } else if(!other.is_local() && this->is_local()) {
+                RT->get(lhs, other.data);
+            } else if(!this->is_local() && other.is_local()) {
+                RT->put(rhs, data);
+            } else if(!this->is_local() && !other.is_local()) {
                 T *tmp = new T[RT->size(data)];
                 RT->get(tmp, other.data);
                 RT->put(tmp, data);
@@ -77,6 +79,29 @@ class coarray {
             } //else throw?
             return *this;
         }
+
+        coarray<T,NumDims> operator[](range R) {
+            coarray<T, NumDims> tmp(data);
+            size_t start, end;
+
+            //assert(tmp.data.start_coords.size() == NumDims-1);
+            
+            if(R.all){
+                start = 0;
+                end = RT->get_dim(data, NumDims-1);
+            } else {
+                start = R.start;
+                end = R.end;
+            }
+
+            if(tmp.data.start_coords.size() > 0) {
+                tmp.data.start_coords[tmp.data.start_coords.size() - 1] = start;
+            } else {
+                tmp.data.start_coords.push_back(start);
+            }
+            tmp.data.extents.push_back(end);
+        }
+
         coarray<T,NumDims-1> operator[](size_t i) { 
             return coarray<T,NumDims-1>(data, i);
         }
@@ -102,14 +127,14 @@ class coarray {
                 data = std::copy(begin(), end(), data);
             }
         }
-        coarray<T,1> get_column(size_t col) {
-            return coarray<T,1>();
-        }
+        
         coarray<T,NumDims>& operator()(){
             return *this;
         }
         coarray<T,NumDims> operator()(int id){
-            return coarray(id, data);
+            coarray<T,NumDims> tmp(data); 
+            tmp.data.node_id = id;
+            return tmp;
         }
         coarray<T,NumDims>& operator()(int first, int second, ...){
             va_list args;
