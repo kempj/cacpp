@@ -29,7 +29,6 @@ void comult2D( coarray<int, 2> A,
     if(id == tot - 1)
         section_size = last_num_rows;
     
-
     for(int row = 0; row < section_size; row++) {
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
