@@ -1,4 +1,5 @@
 #include "coarray.h"
+//#include "local_array.h"
 #include <chrono>
 
 const int size = 128;
@@ -28,16 +29,21 @@ void comult2D( coarray<int, 2> A,
     int section_size = num_rows;
     if(id == tot - 1)
         section_size = last_num_rows;
+
+    //local_array<int, 1> tmp(last_num_rows);
     
     for(int row = 0; row < section_size; row++) {
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
+
+            //TODO: add a temp local copy of B(CA)[:][col]
+            //tmp = B(CA).slice(range::all(), col);
             for(int CA = 0; CA < tot-1; CA++) {
+                //tmp = B(CA).get_column(col);
                 for(size_t inner = 0; inner < num_rows; inner++) {
                     C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
                 }
             }
-            //TODO: add a temp local copy of B(CA)[:][col]
             for(size_t inner = 0; inner < last_num_rows; inner++) {
                 C[row][col] = C[row][col] + A[row][inner + (tot-1)*num_rows] * B(tot-1)[inner][col];
             }

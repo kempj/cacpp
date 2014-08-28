@@ -30,7 +30,7 @@ void coarray_runtime::sync_images(int *image_list, int size) {
     GASNET_BLOCKUNTIL(num_waiting_images == 0);
 }
 
-coarray_runtime::coarray_runtime( uint64_t segsize, int argc, char **argv) {
+coarray_runtime::coarray_runtime( size_t segsize, int argc, char **argv) {
     retval = gasnet_init(&argc, &argv);
 
     image_num = gasnet_mynode();
@@ -55,13 +55,13 @@ void coarray_runtime::put(void *source, void *destination, int node, size_t nbyt
 }
 
 void coarray_runtime::put(void *source, const location_data& dest) {
-    uint64_t size = handles[dest.rt_id].size(dest.start_coords);
+    size_t size = handles[dest.rt_id].size(dest.start_coords);
     size *= handles[dest.rt_id].type_size;
     put(source, get_address(dest), dest.node_id, size);
 }
 
 void coarray_runtime::get(void *dest, const location_data& src){
-    uint64_t size = handles[src.rt_id].size(src.start_coords);
+    size_t size = handles[src.rt_id].size(src.start_coords);
     size *= handles[src.rt_id].type_size;
     get(get_address(src), dest, src.node_id, size);
 }

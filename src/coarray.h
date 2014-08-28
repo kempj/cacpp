@@ -13,7 +13,7 @@ using std::endl;
 
 std::shared_ptr<coarray_runtime> RT;
 
-void coarray_init( uint64_t segsize = 4*1024*1024, int argc = 0, char **argv = NULL ){
+void coarray_init( size_t segsize = 4*1024*1024, int argc = 0, char **argv = NULL ){
     if(argc == 0){
         char *tmp = (char*)"coarrayRT";
         argv = &tmp;
@@ -56,9 +56,10 @@ class coarray {
         coarray(int id, location_data parent_data) : data(parent_data) {
             data.node_id = id;
         }
-        coarray(location_data parent_data, uint64_t i) : data(parent_data) {
+        coarray(location_data parent_data, size_t i) : data(parent_data) {
             data.start_coords.push_back(i);
         }
+
         coarray<T,NumDims>& operator=(coarray<T,NumDims> &other) {
             T *lhs_address = ((T*)RT->get_address(data));
             T *rhs_address = ((T*)RT->get_address(other.data)); 
@@ -76,31 +77,7 @@ class coarray {
             } //else throw?
             return *this;
         }
-        coarray<T,NumDims>& operator()(){
-            return *this;
-        }
-        coarray<T,NumDims> operator()(int id){
-            return coarray(id, data);
-        }
-        coarray<T,NumDims>& operator()(int first, int second, ...){
-            va_list args;
-            va_start(args, second);
-            std::vector<int> index;
-            index.push_back(first);
-            index.push_back(second);
-            vector<uint64_t> codims  = RT->get_codims(data);
-            for(size_t i = 2; i < codims.size(); i++){
-                index.push_back(va_arg(args, int));
-            }
-            va_end(args);
-
-            int current_index = index.back();
-            for(int i = index.size()-1; i > 0; i--){
-                current_index += index[i-1] * codims[i];
-            }
-            return coarray(current_index, *this);
-        }
-        coarray<T,NumDims-1> operator[](uint64_t i) { 
+        coarray<T,NumDims-1> operator[](size_t i) { 
             return coarray<T,NumDims-1>(data, i);
         }
         operator T*() {
@@ -125,6 +102,33 @@ class coarray {
                 data = std::copy(begin(), end(), data);
             }
         }
+        coarray<T,1> get_column(size_t col) {
+            return coarray<T,1>();
+        }
+        coarray<T,NumDims>& operator()(){
+            return *this;
+        }
+        coarray<T,NumDims> operator()(int id){
+            return coarray(id, data);
+        }
+        coarray<T,NumDims>& operator()(int first, int second, ...){
+            va_list args;
+            va_start(args, second);
+            std::vector<int> index;
+            index.push_back(first);
+            index.push_back(second);
+            vector<size_t> codims  = RT->get_codims(data);
+            for(size_t i = 2; i < codims.size(); i++){
+                index.push_back(va_arg(args, int));
+            }
+            va_end(args);
+
+            int current_index = index.back();
+            for(int i = index.size()-1; i > 0; i--){
+                current_index += index[i-1] * codims[i];
+            }
+            return coarray(current_index, *this);
+        }
     private:
         coarray();
         location_data data;
@@ -141,7 +145,7 @@ class coarray<T,0> {
         coarray(int id, location_data parent_data) : data(parent_data) {
             data.node_id = id;
         }
-        coarray(location_data parent_data, uint64_t i) : data(parent_data) {
+        coarray(location_data parent_data, size_t i) : data(parent_data) {
             data.start_coords.push_back(i);
         }
         const coarray<T,0>& operator=(const coarray<T,0> &other) {

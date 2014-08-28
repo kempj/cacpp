@@ -3,7 +3,7 @@
 //TODO: add a shape object
 struct codims {
     int size;
-    std::vector<uint64_t> D;
+    std::vector<size_t> D;
 
     codims(): size(1){
         D.push_back(1);
@@ -15,7 +15,7 @@ struct codims {
         }
     }
 
-    codims(std::initializer_list<uint64_t> l): D(l) {
+    codims(std::initializer_list<size_t> l): D(l) {
         size = l.size();
     }
 };

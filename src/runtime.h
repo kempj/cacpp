@@ -10,14 +10,14 @@ using std::atomic;
 
 
 struct location_data {
-    uint64_t rt_id;
-    std::vector<uint64_t> start_coords;
+    size_t rt_id;
+    std::vector<size_t> start_coords;
     int node_id;
 };
 
 struct descriptor {
-    descriptor( const vector<uint64_t>& D, const vector<uint64_t>& C, 
-                uint64_t delta, size_t ts) : extents(D), codims(C), offset(delta), type_size(ts) {
+    descriptor( const vector<size_t>& D, const vector<size_t>& C, 
+                size_t delta, size_t ts) : extents(D), codims(C), offset(delta), type_size(ts) {
         for(int i = 0; i < extents.size() - 1; i++) {
             stride_multiplier.push_back(extents[extents.size()-1]);
         }
@@ -28,28 +28,28 @@ struct descriptor {
         num_elements = extents[0] * stride_multiplier[0];
         total_size = num_elements * type_size;
     }
-    uint64_t begin(const std::vector<uint64_t>& coords) {
-        uint64_t val = offset;
+    size_t begin(const std::vector<size_t>& coords) {
+        size_t val = offset;
         for(int i = 0; i < coords.size(); i++) {
             val += coords[i] * stride_multiplier[i];
         }
         return val * type_size;
     }
-    uint64_t size(const std::vector<uint64_t>& coords) {
+    size_t size(const std::vector<size_t>& coords) {
         return stride_multiplier[coords.size()-1];
     }
-    uint64_t num_elements;
-    uint64_t total_size;
-    uint64_t offset;
+    size_t num_elements;
+    size_t total_size;
+    size_t offset;
     size_t type_size;
-    vector<uint64_t> extents;
-    vector<uint64_t> stride_multiplier;
-    vector<uint64_t> codims;
+    vector<size_t> extents;
+    vector<size_t> stride_multiplier;
+    vector<size_t> codims;
 };
 
 class coarray_runtime {
     public:
-        coarray_runtime( uint64_t segsize, int argc , char **argv );
+        coarray_runtime( size_t segsize, int argc , char **argv );
         void wait_on_pending_writes();
         void get(void *source, void *destination, int node, size_t nbytes);
         void get(void *dest, const location_data& src);
@@ -69,13 +69,13 @@ class coarray_runtime {
             void* base = segment_info[loc.node_id].addr;
             return base + handles[loc.rt_id].begin(loc.start_coords);
         }
-        uint64_t size(const location_data& data){
+        size_t size(const location_data& data){
             return handles[data.rt_id].size(data.start_coords);
         }
-        vector<uint64_t>& get_codims(const location_data& data){
+        vector<size_t>& get_codims(const location_data& data){
             return handles[data.rt_id].codims;
         }
-        int coarray_setup(vector<uint64_t> dims, vector<uint64_t> codims, size_t type_size) {
+        int coarray_setup(vector<size_t> dims, vector<size_t> codims, size_t type_size) {
             int index = handles.size();
             handles.push_back( descriptor(dims, codims, data_size, type_size));
             data_size += handles[index].total_size;
@@ -93,7 +93,7 @@ class coarray_runtime {
         gasnet_seginfo_t *segment_info;
         int image_num = -1;
         int num_images = -1;
-        uint64_t data_size = 0;//Needed globally to keep track of the beginning of each new coarray
+        size_t data_size = 0;//Needed globally to keep track of the beginning of each new coarray
 };
 
 
