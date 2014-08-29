@@ -2,6 +2,8 @@
 #include <atomic>
 #include <stdexcept>
 #include <iostream>
+#include <array>
+#include <limits>
 
 #include "descriptor.h"
 
@@ -19,9 +21,12 @@ struct location_data {
 };
 
 class coarray_runtime {
+        //bool is_local(const location_data &data) {
+        //    return data.node_id == image_num; } 
+        //size_t get_dim(const location_data &data, size_t index) {
+        //    return handles[data.rt_id].dimensions[index]; }
     public:
         coarray_runtime( size_t segsize, int argc , char **argv );
-        void wait_on_pending_writes();
         void get(void *source, void *destination, int node, size_t nbytes);
         void get(void *dest, const location_data& src);
         void put(void *source, void *destination, int node, size_t nbytes); 
@@ -33,27 +38,26 @@ class coarray_runtime {
         int get_num_images() {
             return num_images;
         }
-        bool is_local(const location_data &data) {
-            return data.node_id == image_num;
+        
+        template<int NumDims>
+        void* get_address(std::array<size_t,NumDims> coords, size_t rt_id, size_t node_id) {
+            void* base = segment_info[node_id].addr;
+            return base + handles[rt_id].offset_of(coords);
         }
-        void* get_address(const location_data &loc) {
-            void* base = segment_info[loc.node_id].addr;
-            return base + handles[loc.rt_id].begin(loc.start_coords);
+
+        template<int NumDims>
+        size_t size( std::array<size_t, NumDims> first_coord,
+                     std::array<size_t, NumDims> last_coord, 
+                     size_t rt_id) {
+            return handles[rt_id].size(first_coord,last_coord);
         }
-        size_t size(const location_data &data){
-            return handles[data.rt_id].size(data.start_coords);
-        }
-        vector<size_t>& get_codims(const location_data &data){
-            return handles[data.rt_id].codims;
-        }
-        size_t get_dim(const location_data &data, size_t index) {
-            return handles[data.rt_id].dimensions[index];
+        vector<size_t>& get_codims(size_t rt_id){
+            return handles[rt_id].codims;
         }
         int coarray_setup(vector<size_t> dims, vector<size_t> codims, size_t type_size) {
             int index = handles.size();
             handles.push_back( descriptor(dims, codims, data_size, type_size));
             data_size += handles[index].total_size;
-            //TODO: Do I want to round this up/align the data?
             return index;
         }
         ~coarray_runtime() {
@@ -69,5 +73,4 @@ class coarray_runtime {
         int num_images = -1;
         size_t data_size = 0;//Needed globally to keep track of the beginning of each new coarray
 };
-
 
