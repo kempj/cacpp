@@ -203,7 +203,7 @@ class local_array {
             if(!orig.is_local()){
                 size_t count[NumDims];
                 for(int i = 0; i < NumDims; i++) {
-                    count[i] = orig.last_coord[i] - orig.first_coord[i];
+                    count[i] = (orig.last_coord[i] - orig.first_coord[i]) * sizeof(T);
                 }
                 //RT->get(orig.begin(), data, orig.node_id, orig.size()*sizeof(T));
                 RT->gets(orig.begin(), data, NumDims, orig.node_id, count, orig.rt_id);
