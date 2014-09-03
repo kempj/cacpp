@@ -17,13 +17,12 @@ int main(int argc, char **argv)
 {
 
     coarray_init(64*1024*1024, argc, argv);
-    int id = this_image();
-    int team_size = num_images();
+    auto id = this_image();
+    auto team_size = num_images();
 
-    int size = 64*1024;
+    size_t size = 64*1024;
     int ex[1];
     ex[0] = size;
-    int scalar = 42;
 
     coarray<int,1> A(dims{size});
 

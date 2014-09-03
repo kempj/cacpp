@@ -9,6 +9,7 @@
 
 #define GASNET_PAR 1
 #include "gasnet.h"
+#include "gasnet_vis.h"
 using std::vector;
 using std::atomic;
 
@@ -18,21 +19,21 @@ class coarray_runtime {
         coarray_runtime( size_t segsize, int argc , char **argv );
         void get(void *source, void *destination, int node, size_t nbytes);
         void put(void *source, void *destination, int node, size_t nbytes); 
-        void gets( void *source, size_t src_strides[], 
-                   void *destination, size_t dest_strides, 
-                   size_t stride_levels, int node, size_t nbytes);
+        void gets( void *source, void *destination, size_t stride_levels, size_t node, size_t *count, size_t rt_id);
+        //void gets( void *source, size_t src_strides[], 
+        //           void *destination, size_t dest_strides, 
+        //           size_t stride_levels, int node, size_t nbytes);
         void puts( void *source, size_t src_strides[], 
                    void *destination, size_t dest_strides, 
                    size_t stride_levels, int node, size_t nbytes);
 
-        int get_image_id(){
+        size_t get_image_id(){
             return image_num;
         }
-        int get_num_images() {
+        size_t get_num_images() {
             return num_images;
         }
-        
-        template<int N>
+        template<size_t N>
         void* get_address(std::array<size_t,N> coords, size_t rt_id, size_t node_id) {
             void* base = segment_info[node_id].addr;
             return base + handles[rt_id].offset_of(coords);
@@ -40,9 +41,11 @@ class coarray_runtime {
         void* get_address( size_t rt_id, size_t node_id) {
             return  segment_info[node_id].addr + handles[rt_id].global_offset;
         }
-
         size_t size(size_t rt_id) {
             return handles[rt_id].num_elements;
+        }
+        size_t get_dim(size_t rt_id, size_t index) {
+            return handles[rt_id].dimensions[index];
         }
         vector<size_t>& get_codims(size_t rt_id){
             return handles[rt_id].codims;

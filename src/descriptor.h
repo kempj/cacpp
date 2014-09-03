@@ -20,7 +20,7 @@ struct descriptor {
         total_size = num_elements * type_size;
     }
 
-    template<int N>
+    template<size_t N>
     size_t offset_of(const std::array<size_t,N>& coords) {
         size_t val = 0;
         for(size_t i = 0; i < N; i++) {

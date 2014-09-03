@@ -1,6 +1,6 @@
 #include <coarray.h>
 
-template<typename T, int NumDims>
+template<typename T>
 class local_array {
     public:
         local_array(size_t size) {
@@ -10,13 +10,13 @@ class local_array {
             delete[] data;
         }
 
-        local_array<T,NumDims>& operator=(T *new_data){
+        local_array<T>& operator=(T *new_data){
             if(data) {
                 delete[] data;
             }
             data = new_data;
         }
-        local_array<T,NumDims>& operator=(coarray<T, NumDims> &original){
+        local_array<T>& operator=(coarray<T, NumDims> &original){
             if(!data){
                 data = new T[original.size()];
             }

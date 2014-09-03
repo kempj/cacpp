@@ -47,13 +47,13 @@ void sync_images(int *image_list, size_t size) {
     RT->sync_images(image_list, size);
 }
 
-template<typename T, int NumDims, int MaxDim = NumDims>
+template<typename T, size_t NumDims, size_t MaxDim = NumDims>
 class coarray {
     public:
         std::array<size_t,MaxDim> first_coord{};
         std::array<size_t,MaxDim> last_coord{};
         size_t rt_id;
-        int node_id;
+        size_t node_id;
 
         coarray(int *D, int cosize, int *C) : coarray( dims(D,NumDims), 
                                                        codims(C, cosize) ) {}
@@ -86,8 +86,8 @@ class coarray {
             }
             return *this;
         }
-
         const coarray<T,0,MaxDim>& operator=(const T &other) const {
+            static_assert(NumDims == 0, "Trying to assign type T to array");
             T* address = (T*) (RT->get_address(rt_id, node_id));
             if(this->is_local()){
                 *address = other;
@@ -97,9 +97,8 @@ class coarray {
             }
             return *this;
         }
-
         operator T() const {
-            static_assert(NumDims == 0, "Trying to convert array to int");
+            static_assert(NumDims == 0, "Trying to convert array to type T");
             T tmp;
             T* address = (T*) (RT->get_address(rt_id, node_id));
             if(this->is_local()){
@@ -111,12 +110,14 @@ class coarray {
         }
         coarray<T,NumDims,MaxDim> operator[](range R) {
             coarray<T, NumDims,MaxDim> tmp(*this);
+            const int index = MaxDim-NumDims;
             if(R.all){
-                tmp.first_coord[0] = 0;
-                tmp.last_coord = std::numeric_limits<std::size_t>::max();
+                tmp.first_coord[index] = 0;
+                tmp.last_coord[index] = RT->get_dim(rt_id, index);
             } else {
-                tmp.first_coord[0] = R.start;
-                tmp.last_coord[0] = R.end;
+                tmp.first_coord[index] = R.start;
+                tmp.last_coord[index] = R.end;
+                //throw if start or end are out of range?
             }
             return tmp;
         }
@@ -127,15 +128,11 @@ class coarray {
             last_coord[MaxDim-NumDims] = i;
             return subarray_type(first_coord, last_coord, rt_id, node_id);
         }
-
-        //operator T*() {
-        //    return (T*)RT->get_address(first_coord, rt_id, node_id);
-        //}
         T* begin() {
-            return (T*)RT->get_address(first_coord, rt_id, node_id);
+            return (T*)(RT->get_address(first_coord, rt_id, node_id));
         }
         T* end() {
-            return (T*)RT->get_address(last_coord, rt_id, node_id);
+            return (T*)(RT->get_address(last_coord, rt_id, node_id));
         }
         size_t size() {
             int val = 1;
@@ -154,8 +151,7 @@ class coarray {
             if(!is_local()){
                 RT->get(begin(), addr, node_id, size()*sizeof(T));
             } else {
-                void* data_addr = RT->get_address(first_coord, rt_id, node_id);
-                addr = std::copy(begin(), end(), data_addr);
+                std::copy(begin(), end(), addr);
             }
         }
         
@@ -188,3 +184,41 @@ class coarray {
     private:
         coarray();
 };
+
+template<typename T>
+class local_array {
+    public:
+        local_array(size_t size): _size(size) {
+            data = new T[size];
+        }
+        ~local_array() {
+            delete[] data;
+        }
+
+        template<size_t NumDims, size_t MaxDim = NumDims>
+        local_array<T>& operator=(coarray<T, NumDims, MaxDim> orig){
+            if(!data){
+                data = new T[orig.size()];
+            }
+            if(!orig.is_local()){
+                size_t count[NumDims];
+                for(int i = 0; i < NumDims; i++) {
+                    count[i] = orig.last_coord[i] - orig.first_coord[i];
+                }
+                //RT->get(orig.begin(), data, orig.node_id, orig.size()*sizeof(T));
+                RT->gets( data, orig.begin(), NumDims, orig.node_id, count, orig.rt_id);
+            } else {
+                std::copy(orig.begin(), orig.end(), data);
+            }
+        }
+        T operator[](size_t idx) {
+            return data[idx];
+        }
+    private:
+        //Do I benefit from forcing the user to specify the size
+        // by making the default constructor private?
+        //TODO: use smart pointer?
+        T* data;
+        size_t _size;
+};
+
