@@ -105,7 +105,7 @@ class coarray {
             if(this->is_local()){
                 tmp = *address;
             } else {
-                RT->get(&tmp, address, node_id, sizeof(T));
+                RT->get(address, &tmp, node_id, sizeof(T));
             }
             return tmp;
         }
