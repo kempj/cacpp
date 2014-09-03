@@ -65,7 +65,7 @@ void coarray_runtime::gets( void *src, void *dest, size_t dims, size_t node, siz
     size_t *src_strides = new size_t[dims-1];
     size_t *dest_strides = new size_t[dims-1];
     for(size_t i = 0; i < dims; i++) {
-        src_strides[i] = handes[rt_id].type_size * handles[rt_id].stride_multiplier[ handles[rt_id].stride_multiplier.size() - 1 - i];
+        src_strides[i] = handles[rt_id].type_size * handles[rt_id].stride_multiplier[ handles[rt_id].stride_multiplier.size() - 1 - i];
     }
     for(size_t i = 0; i < dims; i++) {
         dest_strides[i] = count[i];
