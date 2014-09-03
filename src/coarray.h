@@ -108,8 +108,10 @@ class coarray {
             }
             return tmp;
         }
-        coarray<T,NumDims,MaxDim> operator[](range R) {
-            coarray<T, NumDims,MaxDim> tmp(*this);
+        typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
+
+        subarray_type operator[](range R) {
+            subarray_type tmp(first_coord, last_coord, rt_id, node_id); 
             const int index = MaxDim-NumDims;
             if(R.all){
                 tmp.first_coord[index] = 0;
@@ -121,7 +123,6 @@ class coarray {
             }
             return tmp;
         }
-        typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
         subarray_type operator[](size_t i) { 
             static_assert(NumDims >= 0, "cannot index (co)scalar");
             first_coord[MaxDim-NumDims] = i;
