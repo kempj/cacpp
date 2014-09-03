@@ -206,7 +206,7 @@ class local_array {
                     count[i] = orig.last_coord[i] - orig.first_coord[i];
                 }
                 //RT->get(orig.begin(), data, orig.node_id, orig.size()*sizeof(T));
-                RT->gets( data, orig.begin(), NumDims, orig.node_id, count, orig.rt_id);
+                RT->gets(orig.begin(), data, NumDims, orig.node_id, count, orig.rt_id);
             } else {
                 std::copy(orig.begin(), orig.end(), data);
             }
