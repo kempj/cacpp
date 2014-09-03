@@ -18,10 +18,7 @@ void coarray_runtime::barrier() {
 }
 
 void coarray_runtime::sync_images(int *image_list, int size) {
-    //does this work if 2 back to back sync images are done by 
-    // either the same or different image set? should it?
-    // No, it needs an array. TODO
-    // do all reads and writes need to be done between the two images?
+    // TODO: it needs an array of atomic num_waiting_images.
     // It's the end of a segment, so _all_ communication must be done.
     num_waiting_images += size;
     for(int i = 0; i < size; i++) {
@@ -47,7 +44,7 @@ coarray_runtime::coarray_runtime( size_t segsize, int argc, char **argv) {
 void coarray_runtime::put(void *source, void *destination, int node, size_t nbytes){
     gasnet_put_bulk(node, destination, source, nbytes);
 }
-
+/*
 void coarray_runtime::put(void *source, const location_data& dest) {
     size_t size = handles[dest.rt_id].size(dest.start_coords);
     size *= handles[dest.rt_id].type_size;
@@ -58,7 +55,7 @@ void coarray_runtime::get(void *dest, const location_data& src){
     size_t size = handles[src.rt_id].size(src.start_coords);
     size *= handles[src.rt_id].type_size;
     get(get_address(src), dest, src.node_id, size);
-}
+}*/
 
 void coarray_runtime::get(void *source, void *destination, int node, size_t nbytes){
     gasnet_get_bulk(destination, node, source, nbytes);

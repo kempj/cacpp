@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     stop2 = std::chrono::system_clock::now();
 
     if(id == 0) {
-        cout << "after, A[10] = " << A((id+1)%team_size)[10] << endl;
+        cout << "after, A[10] = " << A((id+1)%team_size)[10][10] << endl;
         cout << "coarray mult time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop - start).count() << " microseconds" << endl;
         cout << "coarray mult  + barrier time: " << std::chrono::duration_cast<std::chrono::microseconds> (stop2 - start).count() 
              << " microseconds" << endl;
