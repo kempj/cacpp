@@ -63,10 +63,14 @@ void coarray_runtime::get(void *source, void *destination, int node, size_t nbyt
 
 void coarray_runtime::gets( void *src, void *dest, size_t dims, size_t node, size_t *count, size_t rt_id){
     size_t *src_strides = new size_t[dims-1];
-    size_t dest_strides[] = {handles[rt_id].num_elements };
+    size_t *dest_strides = new size_t[dims-1];
     for(size_t i = 0; i < dims; i++) {
         src_strides[i] = handles[rt_id].stride_multiplier[ handles[rt_id].stride_multiplier.size() - 1 - i];
     }
+    for(size_t i = 0; i < dims; i++) {
+        dest_strides[i] = count[i];
+    }
+    //dest_strides[0] = handles[rt_id].num_elements;
 
     gasnet_gets_bulk(dest, dest_strides, node, src, src_strides, count, dims-1);
     //gasnet_gets_bulk(node, dest, dest_strides, src, src_strides, count, dims-1);
