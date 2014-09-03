@@ -193,8 +193,8 @@ class local_array {
             data = new T[size];
         }
         ~local_array() {
-            if(data)
-                delete[] data;
+            //if(data)
+            //    delete[] data;
         }
 
         template<size_t NumDims, size_t MaxDim = NumDims>
