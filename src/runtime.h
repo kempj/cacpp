@@ -13,15 +13,6 @@ using std::vector;
 using std::atomic;
 
 
-/*
-struct location_data {
-    size_t rt_id;
-    int node_id;
-    std::vector<size_t> start_coords;
-    std::vector<size_t> extents;//only used in strided communications.
-};
-*/
-
 class coarray_runtime {
     public:
         coarray_runtime( size_t segsize, int argc , char **argv );

@@ -121,7 +121,6 @@ class coarray {
             return tmp;
         }
         typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
-        //typename std::enable_if<(NumDims!=0), subarray_type >::type
         subarray_type operator[](size_t i) { 
             static_assert(NumDims >= 0, "cannot index (co)scalar");
             first_coord[MaxDim-NumDims] = i;
@@ -189,55 +188,3 @@ class coarray {
     private:
         coarray();
 };
-/*
-template<typename T>
-class coarray<T,0> {
-    public:
-        //TODO, decide how to do co-scalars
-        //coarray(dims size, codims cosize) {
-        //    data.rt_id = RT.coarray_setup(size.D, cosize.D, sizeof(T));
-        //    data.node_id = RT.get_image_id();
-        //}
-        coarray(int id, location_data parent_data) : data(parent_data) {
-            data.node_id = id;
-        }
-        coarray(location_data parent_data, size_t i) : data(parent_data) {
-            data.start_coords.push_back(i);
-        }
-        const coarray<T,0>& operator=(const coarray<T,0> &other) {
-            T *data_addr = (T*)RT->get_address(data);
-            T tmp;
-            if(!RT->is_local(data)){
-                //data_addr is not a valid address on this node; a copy is needed
-                data_addr= &tmp;
-            } 
-            *data_addr = T(other);
-
-            if(!RT->is_local(data)) {
-                RT->put((void*)data_addr, data);
-            }
-            return *this;
-        }
-        const coarray<T,0>& operator=(const T &other) const {
-            if(RT->is_local(data)){
-                *((T*) (RT->get_address(data))) = other;
-            } else {
-                T tmp = other;
-                RT->put(&tmp, data);
-            }
-            return *this;
-        }
-        operator T() const {
-            T tmp;
-            if(RT->is_local(data)){
-                tmp = *((T*) (RT->get_address(data)));
-            } else {
-                RT->get(&tmp, data);
-            }
-            return tmp;
-        }
-    private:
-        coarray();
-        location_data data;
-};
-*/
