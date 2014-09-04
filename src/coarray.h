@@ -193,13 +193,13 @@ class local_array {
             data = new T[size];
         }
         ~local_array() {
-            if(data)
+            if(_size != 0)
                 delete[] data;
         }
 
         template<size_t NumDims, size_t MaxDim = NumDims>
         local_array<T>& operator=(coarray<T, NumDims, MaxDim> orig){
-            if(!data){
+            if(_size == 0){
                 data = new T[orig.size()];
             }
             if(!orig.is_local()){
@@ -221,6 +221,6 @@ class local_array {
         // by making the default constructor private?
         //TODO: use smart pointer?
         T* data;
-        size_t _size;
+        size_t _size = 0;
 };
 
