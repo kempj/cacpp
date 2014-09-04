@@ -29,7 +29,8 @@ void coarray_init( size_t segsize = 4*1024*1024, int argc = 0, char **argv = NUL
 
 void coarray_exit() {
     RT->barrier();
-    gasnet_exit(RT->retval);
+    gasnet_exit(0);
+    //gasnet_exit(RT->retval);
 }
 
 int this_image(){
