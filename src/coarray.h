@@ -29,8 +29,7 @@ void coarray_init( size_t segsize = 4*1024*1024, int argc = 0, char **argv = NUL
 
 void coarray_exit() {
     RT->barrier();
-    gasnet_exit(0);
-    //gasnet_exit(RT->retval);
+    gasnet_exit(RT->retval);
 }
 
 int this_image(){
@@ -194,8 +193,8 @@ class local_array {
             data = new T[size];
         }
         ~local_array() {
-            //if(data)
-            //    delete[] data;
+            if(data)
+                delete[] data;
         }
 
         template<size_t NumDims, size_t MaxDim = NumDims>
