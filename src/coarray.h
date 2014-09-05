@@ -190,27 +190,28 @@ template<typename T>
 class local_array {
     public:
         local_array(size_t size): _size(size) {
-            data = new T[size];
-            //data.reset(new T[size]);
+            //data = new T[size];
+            data.reset(new T[size]);
         }
         template<size_t NumDims, size_t MaxDim = NumDims>
         local_array<T>& operator=(coarray<T, NumDims, MaxDim> orig){
             if(_size == 0){
-                data = new T[orig.size()];
-                //data.reset( new T[orig.size()]);
+                //data = new T[orig.size()];
+                data.reset( new T[orig.size()]);
             }
-            if(!orig.is_local()){
+        //    if(!orig.is_local()){
                 size_t count[NumDims];
                 for(int i = 0; i < NumDims; i++) {
                     count[i] = (orig.last_coord[i] - orig.first_coord[i]) * sizeof(T);
                 }
                 //RT->get(orig.begin(), data, orig.node_id, orig.size()*sizeof(T));
-                RT->gets(orig.begin(), data, NumDims, orig.node_id, count, orig.rt_id);
-                //RT->gets(orig.begin(), data.get(), NumDims, orig.node_id, count, orig.rt_id);
-            } else {
-                std::copy(orig.begin(), orig.end(), data);
+                //RT->gets(orig.begin(), data, NumDims, orig.node_id, count, orig.rt_id);
+                RT->gets(orig.begin(), data.get(), NumDims, orig.node_id, count, orig.rt_id);
+        //    } else {
+                //FIXME: this assumes the data is contiguous
+                //std::copy(orig.begin(), orig.end(), &data[0]);
                 //std::copy(orig.begin(), orig.end(), data.get());
-            }
+        //    }
         }
         T operator[](size_t idx) {
             return data[idx];
@@ -218,8 +219,8 @@ class local_array {
     private:
         //Do I benefit from forcing the user to specify the size
         // by making the default constructor private?
-        //std::unique_ptr<T[]> data;
-        T *data;
+        std::unique_ptr<T[]> data;
+        //T *data;
         size_t _size = 0;
 };
 
