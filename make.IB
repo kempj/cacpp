@@ -1,0 +1,9 @@
+mpic++ src/runtime.cpp -c -g -std=c++11 -o ./bin/RT-IB.o -I../../packages/gasnet/include
+-I../../packages/gasnet/include/ibv-conduit -Isrc -L../../packages/gasnet/lib -lpthread
+-lgasnet-mpi-par -lammpi -lgasnet-ibv-par -lrt
+
+
+mpic++  benchmarks/mmult-dist.cpp bin/RT-IB.o -o bin/mmult-IB -g -std=c++11
+-I../../packages/gasnet/include/ibv-conduit -I../../packages/gasnet/include -Isrc
+-L../../packages/gasnet/lib64 -libverbs -lgasnet-ibv-par -lrt
+
