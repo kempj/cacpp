@@ -2,7 +2,7 @@
 //#include "local_array.h"
 #include <chrono>
 
-const int size = 128;
+const int size = 2048;
 size_t num_rows;
 size_t last_num_rows;
 
@@ -51,7 +51,8 @@ void comult2D( coarray<int, 2> A,
 
 int main(int argc, char **argv) 
 {
-    coarray_init(3*8*1024*1024, argc, argv);
+    coarray_init(4*8*size*size, argc, argv);
+    //coarray_init(3*8*1024*1024, argc, argv);
 
     int id = this_image();
     int team_size = num_images();
