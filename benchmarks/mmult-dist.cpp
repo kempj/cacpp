@@ -2,7 +2,7 @@
 //#include "local_array.h"
 #include <chrono>
 
-const int size = 128;
+const int size = 512;
 size_t num_rows;
 size_t last_num_rows;
 
