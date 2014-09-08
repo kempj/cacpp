@@ -7,7 +7,6 @@
 #include "dims.h"
 #include "codims.h"
 #include "range.h"
-//#include "local_array.h"
 
 #include <type_traits>
 
@@ -35,6 +34,7 @@ void coarray_exit() {
 int this_image(){
     return RT->get_image_id();
 }
+
 int num_images(){
     return RT->get_num_images();
 }
@@ -110,9 +110,7 @@ class coarray {
         }
         typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
 
-        //subarray_type operator[](range R) {
         coarray<T, NumDims, MaxDim> operator[](range R) {
-            //subarray_type tmp(first_coord, last_coord, rt_id, node_id); 
             coarray tmp(first_coord, last_coord, rt_id, node_id); 
             const int index = MaxDim-NumDims;
             if(R.all){
@@ -147,16 +145,16 @@ class coarray {
         bool is_local() const{
             return node_id == RT->get_image_id();
         }
-        void copy_to(T* addr){
-            //This doesn't work if the data is noncontiguous. 
+        //void copy_to(T* addr){
+            //TODO:This doesn't work if the data is noncontiguous. 
             //Should this just collect all the data into an array of size size()?
             //or throw if the data is noncontiguous?
-            if(!is_local()){
-                RT->get(begin(), addr, node_id, size()*sizeof(T));
-            } else {
-                std::copy(begin(), end(), addr);
-            }
-        }
+        //    if(!is_local()){
+        //        RT->get(begin(), addr, node_id, size()*sizeof(T));
+        //    } else {
+        //        std::copy(begin(), end(), addr);
+        //    }
+        //}
         
         coarray<T,NumDims,MaxDim>& operator()(){
             return *this;
@@ -192,37 +190,24 @@ template<typename T>
 class local_array {
     public:
         local_array(size_t size): _size(size) {
-            //data = new T[size];
             data.reset(new T[size]);
         }
         template<size_t NumDims, size_t MaxDim = NumDims>
         local_array<T>& operator=(coarray<T, NumDims, MaxDim> orig){
             if(_size == 0){
-                //data = new T[orig.size()];
                 data.reset( new T[orig.size()]);
             }
-        //    if(!orig.is_local()){
-                size_t count[NumDims];
-                for(int i = 0; i < NumDims; i++) {
-                    count[i] = (orig.last_coord[i] - orig.first_coord[i]) * sizeof(T);
-                }
-                //RT->get(orig.begin(), data, orig.node_id, orig.size()*sizeof(T));
-                //RT->gets(orig.begin(), data, NumDims, orig.node_id, count, orig.rt_id);
-                RT->gets(orig.begin(), data.get(), NumDims, orig.node_id, count, orig.rt_id);
-        //    } else {
-                //FIXME: this assumes the data is contiguous
-                //std::copy(orig.begin(), orig.end(), &data[0]);
-                //std::copy(orig.begin(), orig.end(), data.get());
-        //    }
+            size_t count[NumDims];
+            for(int i = 0; i < NumDims; i++) {
+                count[i] = (orig.last_coord[i] - orig.first_coord[i]) * sizeof(T);
+            }
+            RT->gets(orig.begin(), data.get(), NumDims, orig.node_id, count, orig.rt_id);
         }
         T operator[](size_t idx) {
             return data[idx];
         }
     private:
-        //Do I benefit from forcing the user to specify the size
-        // by making the default constructor private?
         std::unique_ptr<T[]> data;
-        //T *data;
         size_t _size = 0;
 };
 

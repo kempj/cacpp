@@ -1,6 +1,5 @@
 #include <vector>
 
-//TODO: add a shape object
 struct codims {
     int size;
     std::vector<size_t> D;
