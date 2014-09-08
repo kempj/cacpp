@@ -2,7 +2,7 @@
 //#include "local_array.h"
 #include <chrono>
 
-const int size = 512;
+const int size = 128;
 size_t num_rows;
 size_t last_num_rows;
 
@@ -27,18 +27,25 @@ void comult2D( coarray<int, 2> A,
     int id = this_image();
     int tot = num_images();
     int section_size = num_rows;
-    if(id == tot - 1)
+    int row_start, row_end;
+    if(id == tot - 1) {
         section_size = last_num_rows;
+        row_start = size - last_num_rows;
+        row_end = size;
+    } else {
+        row_start = id * num_rows;
+        row_end = (id + 1) * num_rows;
+    }
 
     local_array<int> tmp(last_num_rows);
     
-    for(int row = 0; row < section_size; row++) {
+    for(int row = row_start; row < row_end; row++) {
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
             for(int CA = 0; CA < tot-1; CA++) {
                 tmp = B(CA)[range()][col];
                 for(size_t inner = 0; inner < num_rows; inner++) {
-                    C[row][col] = C[row][col] + A[row][inner + CA*num_rows] *tmp[inner];
+                    C[row][col] = C[row][col] + A[row][inner+CA*num_rows] * tmp[inner];
                     //C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
                 }
             }
@@ -51,8 +58,8 @@ void comult2D( coarray<int, 2> A,
 
 int main(int argc, char **argv) 
 {
-    coarray_init(4*8*size*size, argc, argv);
-    //coarray_init(3*8*1024*1024, argc, argv);
+    //coarray_init(4*8*size*size, argc, argv);
+    coarray_init(3*8*1024*1024, argc, argv);
 
     int id = this_image();
     int team_size = num_images();
