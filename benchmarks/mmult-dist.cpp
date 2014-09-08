@@ -35,14 +35,11 @@ void comult2D( coarray<int, 2> A,
     for(int row = 0; row < section_size; row++) {
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
-
-            //TODO: add a temp local copy of B(CA)[:][col]
-            //tmp = B(CA).slice(range::all(), col);
             for(int CA = 0; CA < tot-1; CA++) {
-                tmp = B(CA)[range()];
-                //tmp = B(CA).get_column(col);
+                tmp = B(CA)[range()][col];
                 for(size_t inner = 0; inner < num_rows; inner++) {
-                    C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
+                    C[row][col] = C[row][col] + A[row][inner + CA*num_rows] *tmp[inner];
+                    //C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
                 }
             }
             for(size_t inner = 0; inner < last_num_rows; inner++) {

@@ -110,8 +110,10 @@ class coarray {
         }
         typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
 
-        subarray_type operator[](range R) {
-            subarray_type tmp(first_coord, last_coord, rt_id, node_id); 
+        //subarray_type operator[](range R) {
+        coarray<T, NumDims, MaxDim> operator[](range R) {
+            //subarray_type tmp(first_coord, last_coord, rt_id, node_id); 
+            coarray tmp(first_coord, last_coord, rt_id, node_id); 
             const int index = MaxDim-NumDims;
             if(R.all){
                 tmp.first_coord[index] = 0;
