@@ -2,7 +2,7 @@
 //#include "local_array.h"
 #include <chrono>
 
-const int size = 128;
+const int size = 32;
 size_t num_rows;
 size_t last_num_rows;
 
@@ -61,7 +61,6 @@ void comult2D( coarray<int, 2> A,
                 //C[row][col] = C[row][col] + A[row][inner + (tot-1)*num_rows] * B(tot-1)[inner][col];
             }
         }
-        sync_all();
     }
     cout << "node complete: " << id << endl;
 }
