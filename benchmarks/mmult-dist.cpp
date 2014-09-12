@@ -33,17 +33,19 @@ void comult2D( coarray<int, 2> A,
         row_start = size - last_num_rows;
         row_end = size;
     } else {
+        section_size = num_rows;
         row_start = id * num_rows;
         row_end = (id + 1) * num_rows;
     }
 
     local_array<int> tmp(last_num_rows);
     
-    for(int row = row_start; row < row_end; row++) {
-        //if(id == 0) 
+    for(int row = 0; row < section_size; row++) {
+        if(id == 0) {
             if (row % 8 == 0){
                 cout << "row " << row << endl;
             }
+        }
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
             for(int CA = 0; CA < tot-1; CA++) {
