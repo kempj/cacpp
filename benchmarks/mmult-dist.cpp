@@ -41,11 +41,11 @@ void comult2D( coarray<int, 2> A,
     local_array<int> tmp(last_num_rows);
     
     for(int row = 0; row < section_size; row++) {
-        if(id == 0) {
+        //if(id == 0) {
             if (row % 8 == 0){
-                cout << "row " << row << endl;
+                cout << "row " << row << "( node " << id << ")" << endl;
             }
-        }
+        //}
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
             for(int CA = 0; CA < tot-1; CA++) {
