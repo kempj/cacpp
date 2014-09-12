@@ -16,7 +16,7 @@ void coinit2D(coarray<int, 2> array ){
 
     for(int i = start; i < end; i++) {
         for(int j = 0; j < size; j++) {
-            array[i - start][j] = i*size + j;
+            array[i - start][j] = 1;
         }
     }
 }
