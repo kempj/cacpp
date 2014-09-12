@@ -4,7 +4,7 @@ MPI_INC=-I../../../packages/gasnet/include/mpi-conduit
 
 LIB=-L../../../packages/gasnet/lib
 
-all: ../bin/dist-vector ../bin/dist-mmult
+all: ../bin/dist-mmult ../bin/dist-vector
 
 
 

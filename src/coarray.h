@@ -2,6 +2,7 @@
 #include <cstdarg>
 #include <cassert>
 #include <memory>
+#include <exception>
 
 #include "runtime.h"
 #include "dims.h"
@@ -196,6 +197,10 @@ class local_array {
         local_array<T>& operator=(coarray<T, NumDims, MaxDim> orig){
             if(_size == 0){
                 data.reset( new T[orig.size()]);
+            } else {
+                if(orig.size() > _size) {
+                    throw std::length_error("local_array smaller than source");
+                }
             }
             size_t count[NumDims];
             for(int i = 0; i < NumDims; i++) {
