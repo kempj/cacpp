@@ -102,30 +102,18 @@ int main(int argc, char **argv)
              << " microseconds" << endl;
     }
 
-    /*
     if(this_image() == 0) {
-        cout << "\nA: " << endl;
-        for(int i =0; i < size; i++) {
-            for(int j=0; j < size; j++) {
-                cout << A(i%team_size)[i][j] << ", ";
-            }
-            cout << endl;
-        }
-        cout << "\nB: " << endl;
-        for(int i =0; i < size; i++) {
-            for(int j=0; j < size; j++) {
-                cout << B(i%team_size)[i][j] << ", ";
-            }
-            cout << endl;
-        }
         cout << "\nC: " << endl;
-        for(int i =0; i < size; i++) {
-            for(int j=0; j < size; j++) {
-                cout << C(i%team_size)[i][j] << ", ";
+        for(size_t img = 0; img < team_size - 1; img++) {
+            for(size_t  i =0; i < num_rows; i++) {
+                for(size_t j=0; j < size; j++) {
+                    cout << C(img)[i][j] << ", ";
+                }
+                cout << endl;
             }
-            cout << endl;
         }
-    }*/
+        //add last section
+    }
     coarray_exit();
 
     return 1;
