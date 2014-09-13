@@ -103,9 +103,9 @@ int main(int argc, char **argv)
 
     //f(this_image() == 0) {
     for(size_t src = 0; src < team_size; src++) {
-        cout << "\nOn node " << src << endl;
+        cout << endl << endl << "On node " << src << endl;
         for(size_t img = 0; img < team_size - 1; img++) {
-            cout << "\tImage " << img << endl;
+            cout << "\tImage section " << img << endl;
             for(size_t  i =0; i < num_rows; i++) {
                 cout << "\t";
                 for(size_t j=0; j < size; j++) {
