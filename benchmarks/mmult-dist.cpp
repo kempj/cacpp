@@ -116,7 +116,7 @@ int main(int argc, char **argv)
                 }
             }
             for(size_t  i =0; i < last_num_rows; i++) {
-                cout << "\t";
+                cout << "\tImage section " << img << endl;
                 for(size_t j=0; j < size; j++) {
                     cout << C(team_size-1)[i][j] << ", ";
                 }
