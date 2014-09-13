@@ -51,6 +51,16 @@ void comult2D( coarray<int, 2> A,
             for(int CA = 0; CA < tot-1; CA++) {
                 tmp = B(CA)[range()][col];
                 for(size_t inner = 0; inner < num_rows; inner++) {
+                    for(size_t i = 0; i < tot; i++){
+                        sync_all();
+                        if(id == i) {
+                            cout << "C(" << CA << ")[" << row << "][" << col << "] += " 
+                                 << "A(" << CA <<" )[" << row << "][" << inner+CA*num_rows 
+                                 << "] * tmp[" << inner << "]" << endl;
+                            cout << "(" << C[row][col] << " += " << A[row][inner+CA*num_rows] 
+                                 << " * " << tmp[inner] << endl;
+                        }
+                    }
                     C[row][col] = C[row][col] + A[row][inner+CA*num_rows] * tmp[inner];
                     //C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
                 }
