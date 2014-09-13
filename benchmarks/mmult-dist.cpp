@@ -105,8 +105,9 @@ int main(int argc, char **argv)
     for(size_t src = 0; src < team_size; src++) {
         cout << "\nOn node " << src << endl;
         for(size_t img = 0; img < team_size - 1; img++) {
-            cout << "Image " << img << endl;
+            cout << "\tImage " << img << endl;
             for(size_t  i =0; i < num_rows; i++) {
+                cout << "\t";
                 for(size_t j=0; j < size; j++) {
                     cout << C(img)[i][j] << ", ";
                 }
@@ -114,6 +115,7 @@ int main(int argc, char **argv)
             }
         }
         for(size_t  i =0; i < last_num_rows; i++) {
+            cout << "\t";
             for(size_t j=0; j < size; j++) {
                 cout << C(team_size-1)[i][j] << ", ";
             }
