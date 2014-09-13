@@ -103,21 +103,23 @@ int main(int argc, char **argv)
 
     //f(this_image() == 0) {
     for(size_t src = 0; src < team_size; src++) {
-        cout << endl << endl << "On node " << src << endl;
-        for(size_t img = 0; img < team_size - 1; img++) {
-            cout << "\tImage section " << img << endl;
-            for(size_t  i =0; i < num_rows; i++) {
+        if(this_image() == src) {
+            cout << endl << endl << "On node " << src << endl;
+            for(size_t img = 0; img < team_size - 1; img++) {
+                cout << "\tImage section " << img << endl;
+                for(size_t  i =0; i < num_rows; i++) {
+                    cout << "\t";
+                    for(size_t j=0; j < size; j++) {
+                        cout << C(img)[i][j] << ", ";
+                    }
+                    cout << endl;
+                }
+            }
+            for(size_t  i =0; i < last_num_rows; i++) {
                 cout << "\t";
                 for(size_t j=0; j < size; j++) {
-                    cout << C(img)[i][j] << ", ";
+                    cout << C(team_size-1)[i][j] << ", ";
                 }
-                cout << endl;
-            }
-        }
-        for(size_t  i =0; i < last_num_rows; i++) {
-            cout << "\t";
-            for(size_t j=0; j < size; j++) {
-                cout << C(team_size-1)[i][j] << ", ";
             }
         }
         sync_all();
