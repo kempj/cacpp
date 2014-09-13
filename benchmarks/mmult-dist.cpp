@@ -2,7 +2,7 @@
 //#include "local_array.h"
 #include <chrono>
 
-const int size = 32;
+const int size = 8;
 size_t num_rows;
 size_t last_num_rows;
 
@@ -70,8 +70,8 @@ int main(int argc, char **argv)
     //coarray_init(4*8*size*size, argc, argv);
     coarray_init(3*8*1024*1024, argc, argv);
 
-    int id = this_image();
-    int team_size = num_images();
+    size_t id = this_image();
+    size_t team_size = num_images();
     last_num_rows = size - ((team_size-1)*(size/team_size));
     num_rows = size / team_size;
 
@@ -101,9 +101,11 @@ int main(int argc, char **argv)
              << " microseconds" << endl;
     }
 
-    if(this_image() == 0) {
-        cout << "\nC: " << endl;
+    //f(this_image() == 0) {
+    for(size_t src = 0; src < team_size; src++) {
+        cout << "\nOn node " << src << endl;
         for(size_t img = 0; img < team_size - 1; img++) {
+            cout << "Image " << img << endl;
             for(size_t  i =0; i < num_rows; i++) {
                 for(size_t j=0; j < size; j++) {
                     cout << C(img)[i][j] << ", ";
@@ -111,7 +113,12 @@ int main(int argc, char **argv)
                 cout << endl;
             }
         }
-        //add last section
+        for(size_t  i =0; i < last_num_rows; i++) {
+            for(size_t j=0; j < size; j++) {
+                cout << C(team_size-1)[i][j] << ", ";
+            }
+        }
+        sync_all();
     }
     coarray_exit();
 
