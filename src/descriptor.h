@@ -13,7 +13,7 @@ struct descriptor {
             stride_multiplier.push_back(dimensions[dimensions.size()-1]);
         }
         stride_multiplier.push_back(1);
-        for(int i = dimensions.size()-2; i > 0; i--) {
+        for(int i = dimensions.size()-2; i >= 0; i--) {
             stride_multiplier[i] = dimensions[i+1] * stride_multiplier[i+1];
         }
         num_elements = dimensions[0] * stride_multiplier[0];
@@ -23,7 +23,7 @@ struct descriptor {
     template<size_t N>
     size_t offset_of(const std::array<size_t,N>& coords) {
         size_t val = 0;
-        for(size_t i = 0; i < N; i++) {
+        for(size_t i = 1; i < N; i++) {
             val += coords[i] * stride_multiplier[i];
         }
         return (val * type_size) + global_offset;

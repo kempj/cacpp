@@ -10,6 +10,11 @@
 #define GASNET_PAR 1
 #include "gasnet.h"
 #include "gasnet_vis.h"
+
+#include <iostream>
+using std::cout;
+using std::endl;
+
 using std::vector;
 using std::atomic;
 
@@ -36,6 +41,8 @@ class coarray_runtime {
         template<size_t N>
         void* get_address(std::array<size_t,N> coords, size_t rt_id, size_t node_id) {
             void* base = segment_info[node_id].addr;
+            //cout << "get_address rt_id = " << rt_id << ", base = " << base
+            //     << ", offset = " << handles[rt_id].offset_of(coords) << endl;
             return base + handles[rt_id].offset_of(coords);
         }
         void* get_address( size_t rt_id, size_t node_id) {

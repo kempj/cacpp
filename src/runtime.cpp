@@ -44,35 +44,53 @@ coarray_runtime::coarray_runtime( size_t segsize, int argc, char **argv) {
 void coarray_runtime::put(void *source, void *destination, int node, size_t nbytes){
     gasnet_put_bulk(node, destination, source, nbytes);
 }
-/*
-void coarray_runtime::put(void *source, const location_data& dest) {
-    size_t size = handles[dest.rt_id].size(dest.start_coords);
-    size *= handles[dest.rt_id].type_size;
-    put(source, get_address(dest), dest.node_id, size);
-}
-
-void coarray_runtime::get(void *dest, const location_data& src){
-    size_t size = handles[src.rt_id].size(src.start_coords);
-    size *= handles[src.rt_id].type_size;
-    get(get_address(src), dest, src.node_id, size);
-}*/
 
 void coarray_runtime::get(void *source, void *destination, int node, size_t nbytes){
     gasnet_get_bulk(destination, node, source, nbytes);
 }
 
 void coarray_runtime::gets( void *src, void *dest, size_t dims, size_t node, size_t *count, size_t rt_id){
-    size_t *src_strides = new size_t[dims-1];
-    size_t *dest_strides = new size_t[dims-1];
-    for(size_t i = 0; i < dims; i++) {
-        src_strides[i] = handles[rt_id].type_size * handles[rt_id].stride_multiplier[ handles[rt_id].stride_multiplier.size() - 1 - i];
+    size_t stride_size = dims -1;
+    size_t *src_strides = new size_t[stride_size];
+    for(size_t i = 0; i < stride_size; i++) {
+        src_strides[i] = handles[rt_id].stride_multiplier[ handles[rt_id].stride_multiplier.size() - 2 - i];
+        //src_strides[i] = handles[rt_id].type_size * handles[rt_id].stride_multiplier[ handles[rt_id].stride_multiplier.size() - 2 - i];
     }
-    for(size_t i = 0; i < dims; i++) {
-        dest_strides[i] = count[i];
+    /*
+    barrier();
+    if(image_num == 0) {
+        cout << "========== image 0 ==========" << endl;
+        for(size_t i = 0; i < stride_size; i++) {
+            cout << "src_strides[" << i << "] = " << src_strides[i] << endl;
+        }
+        cout << "node = " << node << endl;
+        cout << "src = " << src << endl;
+        cout << "dest  = " << dest << endl;
+        cout << "count = " << count << endl;
+        cout << "stride_levels = " << dims-1 << endl;
+        cout << "count[0] = " << count[0] << endl;
+        cout << "==========" << endl;
     }
-    //dest_strides[0] = handles[rt_id].num_elements;
+    barrier();
+    if(image_num != 0) {
+        cout << "========== image 1 ==========" << endl;
+        for(size_t i = 0; i < stride_size; i++) {
+            cout << "src_strides[" << i << "] = " << src_strides[i] << endl;
+        }
+        cout << "node = " << node << endl;
+        cout << "src = " << src << endl;
+        cout << "dest  = " << dest << endl;
+        cout << "count = " << count << endl;
+        cout << "stride_levels = " << dims - 1 << endl;
+        for(int i = 0; i < dims; i++) {
+            cout << "count[" << i << "] = " << count[i] << endl;
+        }
+        cout << "==========" << endl;
+    }
+    barrier();
+    */
+    size_t dest_stride = count[0];
 
-    gasnet_gets_bulk(dest, dest_strides, node, src, src_strides, count, dims-1);
+    gasnet_gets_bulk(dest, &dest_stride, node, src, src_strides, count, dims-1);
     delete[] src_strides;
-    delete[] dest_strides;
 }

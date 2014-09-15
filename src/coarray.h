@@ -62,11 +62,20 @@ class coarray {
         coarray(dims size, codims cosize) {
             rt_id = RT->coarray_setup(size.D, cosize.D, sizeof(T));
             node_id = RT->get_image_id();
-            std::copy(&(size.D[0]), &(size.D[0]) + NumDims, &last_coord[0]);
+            std::copy(&(size.D[0]), &(size.D[0]) + MaxDim, &last_coord[0]);
+            //cout << "new top level coarray: " << rt_id << endl;
         }
         coarray( std::array<size_t, MaxDim> fc, std::array<size_t,MaxDim> lc,
                  size_t rt, int node)
                 : first_coord(fc), last_coord(lc), rt_id(rt), node_id(node) {}
+        coarray( std::array<size_t, MaxDim> fc, std::array<size_t,MaxDim> lc,
+                 size_t rt, int node, int index)
+                : first_coord(fc), last_coord(lc), rt_id(rt), node_id(node) {
+                    //cout << "New subarray, setting coord " << MaxDim-NumDims 
+                    //     << " (" << MaxDim << "-" << NumDims << ") = " << index << endl;
+                    first_coord[MaxDim-NumDims-1] = index;
+                    last_coord[MaxDim-NumDims-1] = index;
+                }
         
         coarray<T,NumDims,MaxDim>& operator=(coarray<T,NumDims,MaxDim> &other) {
             T *dest = ((T*)RT->get_address( first_coord, rt_id, node_id ));
@@ -89,7 +98,7 @@ class coarray {
         }
         const coarray<T,0,MaxDim>& operator=(const T &other) const {
             static_assert(NumDims == 0, "Trying to assign type T to array");
-            T* address = (T*) (RT->get_address(rt_id, node_id));
+            T* address = (T*) (RT->get_address(first_coord, rt_id, node_id));
             if(this->is_local()){
                 *address = other;
             } else {
@@ -101,7 +110,8 @@ class coarray {
         operator T() const {
             static_assert(NumDims == 0, "Trying to convert array to type T");
             T tmp;
-            T* address = (T*) (RT->get_address(rt_id, node_id));
+            T* address = (T*) (RT->get_address(first_coord, rt_id, node_id));
+            //cout << "converting to type T (int for test), address = " << address << endl;
             if(this->is_local()){
                 tmp = *address;
             } else {
@@ -126,9 +136,18 @@ class coarray {
         }
         subarray_type operator[](size_t i) { 
             static_assert(NumDims >= 0, "cannot index (co)scalar");
-            first_coord[MaxDim-NumDims] = i;
-            last_coord[MaxDim-NumDims] = i;
-            return subarray_type(first_coord, last_coord, rt_id, node_id);
+            //cout << "array(rt_id = " << rt_id << "): " << endl << "[";
+            //for(size_t idx = 0; idx < MaxDim-1; idx++) {
+            //    cout << first_coord[idx] << ",";
+            //}
+            //cout << first_coord[MaxDim-1] << "], [";
+            //for(size_t idx = 0; idx < MaxDim-1; idx++) {
+            //    cout << last_coord[idx] << ",";
+            //}
+            //cout << last_coord[MaxDim-1] << "] " << endl;
+            //first_coord[MaxDim-NumDims] = i;
+            //last_coord[MaxDim-NumDims] = i;
+            return subarray_type(first_coord, last_coord, rt_id, node_id, i);
         }
         T* begin() {
             return (T*)(RT->get_address(first_coord, rt_id, node_id));
@@ -191,27 +210,38 @@ template<typename T>
 class local_array {
     public:
         local_array(size_t size): _size(size) {
+            //cout << "empty data = " << data.get() << endl;
             data.reset(new T[size]);
+            //cout << "allocating data of size " << size << " for local_array: "
+            //     << data.get() << endl;
         }
         template<size_t NumDims, size_t MaxDim = NumDims>
         local_array<T>& operator=(coarray<T, NumDims, MaxDim> orig){
             if(_size == 0){
+                //cout << "empty data = " << data.get() << endl;
                 data.reset( new T[orig.size()]);
+                //cout << "allocating data of size " << orig.size() << " for local_array: "
+                //     << data.get() << endl;
             } else {
                 if(orig.size() > _size) {
                     throw std::length_error("local_array smaller than source");
                 }
             }
-            size_t count[NumDims];
-            for(int i = 0; i < NumDims; i++) {
+            size_t count[MaxDim];//This needs to be the max dimension of the src array,
+            // notthe dimension of the local_array.
+            for(int i = 0; i < MaxDim; i++) {
                 count[i] = (orig.last_coord[i] - orig.first_coord[i]) * sizeof(T);
+                if( count[i] == 0) {
+                    count[i] = 1;
+                }
             }
-            RT->gets(orig.begin(), data.get(), NumDims, orig.node_id, count, orig.rt_id);
+            RT->gets(orig.begin(), data.get(), MaxDim, orig.node_id, count, orig.rt_id);
         }
         T operator[](size_t idx) {
             return data[idx];
         }
     private:
+        local_array();
         std::unique_ptr<T[]> data;
         size_t _size = 0;
 };
