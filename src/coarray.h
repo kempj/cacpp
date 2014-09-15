@@ -71,10 +71,10 @@ class coarray {
         coarray( std::array<size_t, MaxDim> fc, std::array<size_t,MaxDim> lc,
                  size_t rt, int node, int index)
                 : first_coord(fc), last_coord(lc), rt_id(rt), node_id(node) {
-                    //cout << "New subarray, setting coord " << MaxDim-NumDims 
+                    //cout << "New subarray, setting coord " << NumDims 
                     //     << " (" << MaxDim << "-" << NumDims << ") = " << index << endl;
-                    first_coord[MaxDim-NumDims-1] = index;
-                    last_coord[MaxDim-NumDims-1] = index;
+                    first_coord[(MaxDim-1)-NumDims] = index;
+                    last_coord[(MaxDim-1)-NumDims] = index;
                 }
         
         coarray<T,NumDims,MaxDim>& operator=(coarray<T,NumDims,MaxDim> &other) {

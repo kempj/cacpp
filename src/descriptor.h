@@ -2,6 +2,10 @@
 #include <array>
 #include <cstddef>
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 using std::vector;
 
 struct descriptor {
@@ -22,10 +26,18 @@ struct descriptor {
 
     template<size_t N>
     size_t offset_of(const std::array<size_t,N>& coords) {
+        //cout << "Offset of [";
+        //for(auto entry : coords) {
+        //    cout << entry << ", ";
+        //}
+        //cout << "]" << endl;
         size_t val = 0;
-        for(size_t i = 1; i < N; i++) {
+        for(size_t i = 0; i < N; i++) {
+            //cout << "val = " << coords[i] << " * " << stride_multiplier[i] << ": ";
             val += coords[i] * stride_multiplier[i];
+            //cout << "val = " << val << endl;
         }
+        //cout << "returning " << (val * type_size) + global_offset << endl;
         return (val * type_size) + global_offset;
     }
     size_t num_elements;
