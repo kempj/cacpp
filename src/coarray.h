@@ -121,6 +121,7 @@ class coarray {
         }
         typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
 
+        //TODO: this needs to return subarray_type. FIXME
         coarray<T, NumDims, MaxDim> operator[](range R) {
             coarray tmp(first_coord, last_coord, rt_id, node_id); 
             const int index = MaxDim-NumDims;
@@ -227,15 +228,27 @@ class local_array {
                     throw std::length_error("local_array smaller than source");
                 }
             }
-            size_t count[MaxDim];//This needs to be the max dimension of the src array,
-            // notthe dimension of the local_array.
+            size_t count[MaxDim];
+            cout << "last_coord: [" ;
+            for(auto entry : orig.last_coord) {
+                cout << entry << ", ";
+            }
+            cout << "] first_record: [";
+            for(auto entry : orig.last_coord) {
+                cout << entry << ", ";
+            }
+            cout << "]" << endl;
             for(int i = 0; i < MaxDim; i++) {
-                count[i] = (orig.last_coord[i] - orig.first_coord[i]) * sizeof(T);
+                count[i] = (orig.last_coord[i] - orig.first_coord[i]) ;//* sizeof(T);
                 if( count[i] == 0) {
                     count[i] = 1;
                 }
+                if(i == 0){
+                   count[i] *= sizeof(T);
+                }
             }
             RT->gets(orig.begin(), data.get(), MaxDim, orig.node_id, count, orig.rt_id);
+            //gasnet_wait_syncnbi_all();
         }
         T operator[](size_t idx) {
             return data[idx];
