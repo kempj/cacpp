@@ -62,42 +62,20 @@ void coarray_runtime::gets( void *src, void *dest, size_t dims, size_t node, siz
         dest_strides[i] = data_size;
     }
     dest_strides[0] = count[0];
-   /* 
-    barrier();
-    if(image_num == 0) {
-        cout << "========== image 0 ==========" << endl;
-        for(size_t i = 0; i < stride_size; i++) {
-            cout << "src_strides[" << i << "] = " << src_strides[i] << endl;
-        }
-        cout << "node = " << node << endl;
-        cout << "src = " << src << endl;
-        cout << "dest  = " << dest << endl;
-        cout << "count = " << count << endl;
-        cout << "stride_levels = " << dims-1 << endl;
-        for(size_t i = 0; i < dims; i++) {
-            cout << "count[" << i << "] = " << count[i] << endl;
-        }
-        cout << "==========" << endl;
+    for(size_t i = 0; i < stride_size; i++) {
+        cout << "src_strides[" << i << "] = " << src_strides[i] << endl;
+        cout << "dest_strides[" << i << "] = " << dest_strides[i] << endl;
     }
-    barrier();
-    if(image_num != 0) {*/
-        cout << "========== image 1 ==========" << endl;
-        for(size_t i = 0; i < stride_size; i++) {
-            cout << "src_strides[" << i << "] = " << src_strides[i] << endl;
-            cout << "dest_strides[" << i << "] = " << dest_strides[i] << endl;
-        }
-        //cout << "dest stride = " << dest_stride << endl;
-        cout << "node = " << node << endl;
-        cout << "src = " << src << endl;
-        cout << "dest  = " << dest << endl;
-        cout << "count = " << count << endl;
-        cout << "stride_levels = " << dims - 1 << endl;
-        for(size_t i = 0; i < dims; i++) {
-            cout << "count[" << i << "] = " << count[i] << endl;
-        }
-        cout << "==========" << endl;
-    //}
-    //barrier();
+    //cout << "dest stride = " << dest_stride << endl;
+    cout << "node = " << node << endl;
+    cout << "src = " << src << endl;
+    cout << "dest  = " << dest << endl;
+    cout << "count = " << count << endl;
+    cout << "stride_levels = " << dims - 1 << endl;
+    for(size_t i = 0; i < dims; i++) {
+        cout << "count[" << i << "] = " << count[i] << endl;
+    }
+    cout << "==========" << endl;
     
 
     gasnet_gets_bulk(dest, dest_strides, node, src, src_strides, count, dims-1);

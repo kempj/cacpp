@@ -122,8 +122,9 @@ class coarray {
         typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
 
         //TODO: this needs to return subarray_type. FIXME
-        coarray<T, NumDims, MaxDim> operator[](range R) {
-            coarray tmp(first_coord, last_coord, rt_id, node_id); 
+        //coarray<T, NumDims, MaxDim> operator[](range R) {
+        subarray_type operator[](range R) {
+            subarray_type tmp(first_coord, last_coord, rt_id, node_id); 
             const int index = MaxDim-NumDims;
             if(R.all){
                 tmp.first_coord[index] = 0;
@@ -239,8 +240,8 @@ class local_array {
             }
             cout << "]" << endl;
             for(int i = 0; i < MaxDim; i++) {
-                count[i] = (orig.last_coord[i] - orig.first_coord[i]) ;//* sizeof(T);
-                if( count[i] == 0) {
+                count[i] = (orig.last_coord[MaxDim-1-i] - orig.first_coord[MaxDim-1-i]) ;
+                if( count[i] == 0 ) {
                     count[i] = 1;
                 }
                 if(i == 0){
