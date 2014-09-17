@@ -2,7 +2,7 @@
 //#include "local_array.h"
 #include <chrono>
 
-const int size = 8;
+const int size = 128;
 size_t num_rows;
 size_t last_num_rows;
 
@@ -16,10 +16,7 @@ void coinit2D(coarray<int, 2> array ){
 
     for(int i = start; i < end; i++) {
         for(int j = 0; j < size; j++) {
-            //cout << "array[" << i-start << "][" << j << " should be " << i*size + j << endl;
             array[i - start][j] = i*size + j;
-            //cout << "array[" << i-start << "][" << j << " is " << array[i-start][j]  << endl;
-            //array[i - start][j] = 1;
         }
     }
 }
@@ -44,16 +41,17 @@ void comult2D( coarray<int, 2> A,
     local_array<int> tmp(last_num_rows);
     
     for(int row = 0; row < section_size; row++) {
-        //if(id == 0) {
+        if(id == 0) {
             if (row % 8 == 0){
                 cout << "row " << row << "( node " << id << ")" << endl;
             }
-        //}
+        }
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;
             for(int CA = 0; CA < tot-1; CA++) {
                 tmp = B(CA)[range()][col];
                 for(size_t inner = 0; inner < num_rows; inner++) {
+                    /*
                     for(size_t i = 0; i < tot; i++){
                         sync_all();
                         if(id == i) {
@@ -63,7 +61,7 @@ void comult2D( coarray<int, 2> A,
                             cout << "(" << C[row][col] << " += " << A[row][inner+CA*num_rows] 
                                  << " * " << tmp[inner] << endl;
                         }
-                    }
+                    }*/
                     C[row][col] = C[row][col] + A[row][inner+CA*num_rows] * tmp[inner];
                     //C[row][col] = C[row][col] + A[row][inner + CA*num_rows] * B(CA)[inner][col];
                 }
@@ -75,9 +73,9 @@ void comult2D( coarray<int, 2> A,
             }
         }
     }
-    for(size_t i = 0; i < last_num_rows; i++) {
-        cout << "tmp[" << i << "] = " << tmp[i] << endl;
-    }
+    //for(size_t i = 0; i < last_num_rows; i++) {
+    //    cout << "tmp[" << i << "] = " << tmp[i] << endl;
+    //}
     sync_all();
     cout << "node complete: " << id << endl;
 }
@@ -128,13 +126,6 @@ int main(int argc, char **argv)
     coinit2D(B);
 
     sync_all();
-    cout << "\n\nA:\n";
-    printCA(A);
-    cout << "\n\nB:\n";
-    printCA(B);
-    cout << "\n\nC:\n";
-    printCA(C);
-    sync_all();
 
     std::chrono::time_point <std::chrono::system_clock> start, stop, stop2;
     start= std::chrono::system_clock::now();
@@ -152,12 +143,8 @@ int main(int argc, char **argv)
              << " microseconds" << endl;
     }
 
-    cout << "\n\nA:\n";
-    printCA(A);
-    cout << "\n\nB:\n";
-    printCA(B);
-    cout << "\n\nC:\n";
-    printCA(C);
+    //cout << "\n\nC:\n";
+    //printCA(C);
 
     coarray_exit();
 

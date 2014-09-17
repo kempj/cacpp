@@ -63,7 +63,6 @@ class coarray {
             rt_id = RT->coarray_setup(size.D, cosize.D, sizeof(T));
             node_id = RT->get_image_id();
             std::copy(&(size.D[0]), &(size.D[0]) + MaxDim, &last_coord[0]);
-            //cout << "new top level coarray: " << rt_id << endl;
         }
         coarray( std::array<size_t, MaxDim> fc, std::array<size_t,MaxDim> lc,
                  size_t rt, int node)
@@ -71,8 +70,6 @@ class coarray {
         coarray( std::array<size_t, MaxDim> fc, std::array<size_t,MaxDim> lc,
                  size_t rt, int node, int index)
                 : first_coord(fc), last_coord(lc), rt_id(rt), node_id(node) {
-                    //cout << "New subarray, setting coord " << NumDims 
-                    //     << " (" << MaxDim << "-" << NumDims << ") = " << index << endl;
                     first_coord[(MaxDim-1)-NumDims] = index;
                     last_coord[(MaxDim-1)-NumDims] = index;
                 }
@@ -111,7 +108,6 @@ class coarray {
             static_assert(NumDims == 0, "Trying to convert array to type T");
             T tmp;
             T* address = (T*) (RT->get_address(first_coord, rt_id, node_id));
-            //cout << "converting to type T (int for test), address = " << address << endl;
             if(this->is_local()){
                 tmp = *address;
             } else {
@@ -121,8 +117,6 @@ class coarray {
         }
         typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
 
-        //TODO: this needs to return subarray_type. FIXME
-        //coarray<T, NumDims, MaxDim> operator[](range R) {
         subarray_type operator[](range R) {
             subarray_type tmp(first_coord, last_coord, rt_id, node_id); 
             const int index = MaxDim-NumDims;
@@ -167,16 +161,6 @@ class coarray {
         bool is_local() const{
             return node_id == RT->get_image_id();
         }
-        //void copy_to(T* addr){
-            //TODO:This doesn't work if the data is noncontiguous. 
-            //Should this just collect all the data into an array of size size()?
-            //or throw if the data is noncontiguous?
-        //    if(!is_local()){
-        //        RT->get(begin(), addr, node_id, size()*sizeof(T));
-        //    } else {
-        //        std::copy(begin(), end(), addr);
-        //    }
-        //}
         
         coarray<T,NumDims,MaxDim>& operator()(){
             return *this;
@@ -212,33 +196,18 @@ template<typename T>
 class local_array {
     public:
         local_array(size_t size): _size(size) {
-            //cout << "empty data = " << data.get() << endl;
             data.reset(new T[size]);
-            //cout << "allocating data of size " << size << " for local_array: "
-            //     << data.get() << endl;
         }
         template<size_t NumDims, size_t MaxDim = NumDims>
         local_array<T>& operator=(coarray<T, NumDims, MaxDim> orig){
             if(_size == 0){
-                //cout << "empty data = " << data.get() << endl;
                 data.reset( new T[orig.size()]);
-                //cout << "allocating data of size " << orig.size() << " for local_array: "
-                //     << data.get() << endl;
             } else {
                 if(orig.size() > _size) {
                     throw std::length_error("local_array smaller than source");
                 }
             }
             size_t count[MaxDim];
-            cout << "last_coord: [" ;
-            for(auto entry : orig.last_coord) {
-                cout << entry << ", ";
-            }
-            cout << "] first_record: [";
-            for(auto entry : orig.last_coord) {
-                cout << entry << ", ";
-            }
-            cout << "]" << endl;
             for(int i = 0; i < MaxDim; i++) {
                 count[i] = (orig.last_coord[MaxDim-1-i] - orig.first_coord[MaxDim-1-i]) ;
                 if( count[i] == 0 ) {
@@ -249,7 +218,6 @@ class local_array {
                 }
             }
             RT->gets(orig.begin(), data.get(), MaxDim, orig.node_id, count, orig.rt_id);
-            //gasnet_wait_syncnbi_all();
         }
         T operator[](size_t idx) {
             return data[idx];
