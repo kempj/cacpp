@@ -3,6 +3,7 @@
 #include <chrono>
 
 int size = 512;
+int block_size = 1;
 size_t num_rows;
 size_t last_num_rows;
 
@@ -79,10 +80,48 @@ void comult_LA( coarray<int, 2> A,
     local_array<int> tmp(last_num_rows);
     
     for(int row = 0; row < section_size; row++) {
-        if(id == 0) {
-            if (row % 8 == 0){
-                cout << "row " << row << "( node " << id << ")" << endl;
+        if(id == 0 && row % 8 == 0) {
+            cout << "row " << row << "( node " << id << ")" << endl;
+        }
+        for(int col = 0; col < size; col++) {
+            C[row][col] = 0;
+            for(int CA = 0; CA < tot-1; CA++) {
+                tmp = B(CA)[range()][col];
+                for(size_t inner = 0; inner < num_rows; inner++) {
+                    C[row][col] = C[row][col] + A[row][inner+CA*num_rows] * tmp[inner];
+                }
             }
+            tmp = B(tot-1)[range()][col];
+            for(size_t inner = 0; inner < last_num_rows; inner++) {
+                C[row][col] = C[row][col] + A[row][inner + (tot-1)*num_rows] * tmp[inner];
+            }
+        }
+    }
+    cout << "node complete: " << id << endl;
+}
+
+void comult_block( coarray<int, 2> A,
+                   coarray<int, 2> B,
+                   coarray<int, 2> C) {
+    int id = this_image();
+    int tot = num_images();
+    int section_size = num_rows;
+    int row_start, row_end;
+    if(id == tot - 1) {
+        section_size = last_num_rows;
+        row_start = size - last_num_rows;
+        row_end = size;
+    } else {
+        section_size = num_rows;
+        row_start = id * num_rows;
+        row_end = (id + 1) * num_rows;
+    }
+
+    local_array<int> tmp(last_num_rows);
+    
+    for(int row = 0; row < section_size; row++) {
+        if(id == 0 && row % 8 == 0) {
+            cout << "row " << row << "( node " << id << ")" << endl;
         }
         for(int col = 0; col < size; col++) {
             C[row][col] = 0;

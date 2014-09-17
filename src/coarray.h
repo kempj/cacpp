@@ -132,18 +132,7 @@ class coarray {
         }
         subarray_type operator[](size_t i) { 
             static_assert(NumDims >= 0, "cannot index (co)scalar");
-            //cout << "array(rt_id = " << rt_id << "): " << endl << "[";
-            //for(size_t idx = 0; idx < MaxDim-1; idx++) {
-            //    cout << first_coord[idx] << ",";
-            //}
-            //cout << first_coord[MaxDim-1] << "], [";
-            //for(size_t idx = 0; idx < MaxDim-1; idx++) {
-            //    cout << last_coord[idx] << ",";
-            //}
-            //cout << last_coord[MaxDim-1] << "] " << endl;
-            //first_coord[MaxDim-NumDims] = i;
-            //last_coord[MaxDim-NumDims] = i;
-            return subarray_type(first_coord, last_coord, rt_id, node_id, i);
+            return operator[](range(i,i));
         }
         T* begin() {
             return (T*)(RT->get_address(first_coord, rt_id, node_id));
@@ -195,6 +184,7 @@ class coarray {
 template<typename T>
 class local_array {
     public:
+        //TODO: enable multidimensional local_arrays
         local_array(size_t size): _size(size) {
             data.reset(new T[size]);
         }
