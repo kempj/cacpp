@@ -93,7 +93,13 @@ class coarray {
             }
             return *this;
         }
+        void get(T* destination) {
+            T *my_addr = ((T*)RT->get_address( first_coord, rt_id, node_id ));
+            RT->get(my_addr, destination, node_id, size()*sizeof(T));
+        }
+
         const coarray<T,0,MaxDim>& operator=(const T &other) const {
+        //coarray<T,0,MaxDim>& operator=(T &other) {
             static_assert(NumDims == 0, "Trying to assign type T to array");
             T* address = (T*) (RT->get_address(first_coord, rt_id, node_id));
             if(this->is_local()){
@@ -105,6 +111,7 @@ class coarray {
             return *this;
         }
         operator T() const {
+        //operator T() {
             static_assert(NumDims == 0, "Trying to convert array to type T");
             T tmp;
             T* address = (T*) (RT->get_address(first_coord, rt_id, node_id));
@@ -115,6 +122,7 @@ class coarray {
             }
             return tmp;
         }
+
         typedef coarray<T,(NumDims-1)*(NumDims>=0),MaxDim> subarray_type;
 
         subarray_type operator[](range R) {
@@ -131,7 +139,7 @@ class coarray {
             return tmp;
         }
         subarray_type operator[](size_t i) { 
-            static_assert(NumDims >= 0, "cannot index (co)scalar");
+            static_assert(NumDims > 0, "cannot index (co)scalar");
             return operator[](range(i,i));
         }
         T* begin() {
@@ -209,7 +217,7 @@ class local_array {
             }
             RT->gets(orig.begin(), data.get(), MaxDim, orig.node_id, count, orig.rt_id);
         }
-        T operator[](size_t idx) {
+        T& operator[](size_t idx) {
             return data[idx];
         }
     private:

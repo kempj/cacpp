@@ -1,14 +1,17 @@
-#include "coarray.h"
+//#include "coarray.h"
 
-template<typename T, int NumDims>
-void gather(local_array<T> result, coarray<T,NumDims> data){
-    for(size_t i =0; i < num_images(); i++) {
-        size_t offset = data.size();
-        for(int j = 0; j < data.size(); j++) {
-            result[offset + j] = data(i)[j];
+template<typename T>
+void gather(local_array<T> &result, coarray<T,1> &data){
+    sync_all();
+    if(this_image() == 0) {
+        for(size_t i = 0; i < num_images(); i++) {
+            size_t offset = data.size() * i;
+            data(i).get(&result[offset]);
+            //for(int j = 0; j < data.size(); j++) {
+            //    result[offset + j] = data(i)[j];
+            //}
         }
     }
-    //size(local_array) * num_images() = size(coarray)
 };
 /*
 void scatter(local_array data, coarray result){

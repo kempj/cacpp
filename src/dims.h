@@ -1,4 +1,5 @@
 #include <vector>
+#include <cassert>
 
 struct dims {
     int size;
