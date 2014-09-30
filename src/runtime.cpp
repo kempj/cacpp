@@ -18,7 +18,7 @@ void coarray_runtime::barrier() {
 }
 
 void coarray_runtime::sync_images(int *image_list, int size) {
-    // TODO: it needs an array of atomic num_waiting_images.
+    // FIXME: it needs an array of atomic num_waiting_images.
     // It's the end of a segment, so _all_ communication must be done.
     num_waiting_images += size;
     for(int i = 0; i < size; i++) {
