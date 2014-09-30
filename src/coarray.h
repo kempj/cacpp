@@ -97,6 +97,10 @@ class coarray {
             T *my_addr = ((T*)RT->get_address( first_coord, rt_id, node_id ));
             RT->get(my_addr, destination, node_id, size()*sizeof(T));
         }
+        void put(T* source) {
+            T *my_addr = ((T*)RT->get_address( first_coord, rt_id, node_id ));
+            RT->put(source, my_addr, node_id, size()*sizeof(T));
+        }
 
         const coarray<T,0,MaxDim>& operator=(const T &other) const {
             static_assert(NumDims == 0, "Trying to assign type T to array");
