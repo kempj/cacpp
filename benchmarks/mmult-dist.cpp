@@ -1,5 +1,5 @@
-#include "coarray.h"
-//#include "local_array.h"
+//#include "coarray.h"
+#include "cacpp.h"
 #include <chrono>
 
 int size = 512;

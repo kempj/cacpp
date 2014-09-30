@@ -11,7 +11,15 @@ gather: ../bin/gather-test
 
 .PHONY : ../bin/runtime.o
 ../bin/runtime.o: 
-	cd ../src; make
+	cd ../src; make clean && make
+
+.PHONY : ../src/coarray.h
+../src/coarray.h:
+	cd ../src; make clean && make
+
+.PHONY : ../src/collectives.h
+../src/collectives.h:
+	cd ../src; make clean && make
 
 ../bin/driver: driver.cpp ../src/coarray.h ../bin/runtime.o
 	$(CC) $< ../bin/runtime.o -o $@ -g -std=c++11 $(INC) $(LIB) -lpthread -lgasnet-mpi-par -lammpi -lrt

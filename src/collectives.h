@@ -1,4 +1,3 @@
-//#include "coarray.h"
 
 template<typename T>
 void gather(local_array<T> &result, coarray<T,1> &data){

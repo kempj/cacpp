@@ -99,7 +99,6 @@ class coarray {
         }
 
         const coarray<T,0,MaxDim>& operator=(const T &other) const {
-        //coarray<T,0,MaxDim>& operator=(T &other) {
             static_assert(NumDims == 0, "Trying to assign type T to array");
             T* address = (T*) (RT->get_address(first_coord, rt_id, node_id));
             if(this->is_local()){
@@ -111,7 +110,6 @@ class coarray {
             return *this;
         }
         operator T() const {
-        //operator T() {
             static_assert(NumDims == 0, "Trying to convert array to type T");
             T tmp;
             T* address = (T*) (RT->get_address(first_coord, rt_id, node_id));
@@ -193,6 +191,7 @@ template<typename T>
 class local_array {
     public:
         //TODO: enable multidimensional local_arrays
+        size_t size(){return _size;}
         local_array(size_t size): _size(size) {
             data.reset(new T[size]);
         }
