@@ -54,5 +54,15 @@ int main(int argc, char **argv){
             cout << endl;
         }
     }
+
+    sync_all();
+
+    if(this_image() == 0) {
+        collect(gather_result, scatter_result);
+        cout << "collect result:" << endl;
+        for(int i = 0; i < data_size; i++)
+            cout << scatter_result[i] << ", ";
+        cout << endl;
+    }
 }
 

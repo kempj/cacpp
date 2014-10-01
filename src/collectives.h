@@ -17,10 +17,15 @@ void scatter(local_array<T> &data, coarray<T,1> &result){
             //result(i) = data[result.size() * i];
         }
     }
-    //size(local_array) = size(coarray)* num_images()
 };
-/*
-void collect(local_array scratch, coarray data){
-    //size(local_array) = size(coarray)
+
+template<typename T>
+void collect(local_array<T> &scratch, coarray<T,1> &data){
+    for(int img = 1; img < num_images(); img++) {
+        scratch = data(img);
+        for(int i = 0; i < data.size(); i++) {
+           //data[i] += scratch[i];
+           data[i] = data[i] + scratch[i];
+        }
+    }
 };
-*/  
